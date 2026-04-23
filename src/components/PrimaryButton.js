@@ -1,4 +1,3 @@
-import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
 import { colors, radius } from '../theme/tokens';
@@ -22,11 +21,12 @@ export function PrimaryButton({ label, loading, onPress, variant = 'primary' }) 
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 56,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    minWidth: 120
   },
   primaryButton: {
     backgroundColor: colors.primary,

@@ -2,7 +2,6 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { InfoPanel } from '../components/InfoPanel';
 import { JobCard } from '../components/JobCard';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { StatCard } from '../components/StatCard';
 import { copy } from '../constants/copy';
@@ -54,7 +53,7 @@ export function LabourDashboard({
           <PrimaryButton label={text.logout} onPress={onLogout} variant="ghost" />
         </View>
 
-        <LanguageSwitcher  selected={language} onChange={onChangeLanguage} />
+        {/* <LanguageSwitcher  selected={language} onChange={onChangeLanguage} /> */}
 
         <View style={styles.profileBar}>
           <Text style={styles.profileText}>{session.user.email}</Text>
@@ -192,10 +191,10 @@ const styles = StyleSheet.create({
   },
   heroCopy: {
     flex: 1,
-    gap: 8,
+    gap: 12,
   },
   heroBadge: {
-    alignSelf: 'flex-start',
+    // alignSelf: 'flex-start',
     backgroundColor: colors.accent,
     color: colors.panel,
     paddingHorizontal: 12,
@@ -203,6 +202,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     fontSize: 12,
     fontWeight: '800',
+    maxWidth:135
   },
   heroTitle: {
     color: colors.panel,

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius } from '../theme/tokens';
@@ -46,6 +45,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: 20,
     gap: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    boxShadow: '0 10px 18px rgba(18, 35, 32, 0.08)',
   },
   header: {
     flexDirection: 'row',

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { colors, radius } from '../theme/tokens';
@@ -75,6 +74,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: 20,
     gap: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    boxShadow: '0 10px 18px rgba(18, 35, 32, 0.08)',
   },
   title: {
     color: colors.text,

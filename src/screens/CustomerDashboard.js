@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   heroBadge: {
-    alignSelf: 'flex-start',
+    // alignSelf: 'flex-start',
     backgroundColor: colors.accent,
     color: colors.panel,
     paddingHorizontal: 12,
@@ -260,6 +260,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     fontSize: 12,
     fontWeight: '800',
+    maxWidth:135
   },
   heroTitle: {
     color: colors.panel,
@@ -287,26 +288,29 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   postJobBar: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.panel,
     borderRadius: radius.lg,
     padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    boxShadow: '0 10px 18px rgba(18, 35, 32, 0.08)',
   },
   postJobLabel: {
-    color: colors.panel,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
   postJobBody: {
-    color: '#d9e6e0',
+    color: colors.textMuted,
     fontSize: 14,
     lineHeight: 20,
   },
   postJobAction: {
-    color: colors.panel,
+    color: colors.primary,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -330,10 +334,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   emptyCard: {
-    backgroundColor: colors.panelMuted,
+    backgroundColor: colors.panel,
     borderRadius: radius.lg,
     padding: 24,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    boxShadow: '0 10px 18px rgba(18, 35, 32, 0.08)',
   },
   emptyText: {
     color: colors.textMuted,
