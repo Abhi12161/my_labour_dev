@@ -1,50 +1,137 @@
-# Welcome to your Expo app 👋
+# Bihar Labor Management App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+React Native app with:
 
-## Get started
+- separate customer and labour login/signup flow
+- env-based API service layer
+- customer home with nearby labor discovery
+- labour dashboard with profile, skills, ratings, and job requests
+- Muzaffarpur-focused search and filters
+- Hindi, Bhojpuri, and English support
 
-1. Install dependencies
+## Clean structure
 
-   ```bash
-   npm install
-   ```
+- `app/index.js` app entry
+- `src/app/RootApp.js` top-level flow controller
+- `src/screens/AuthScreen.js` login and signup screen
+- `src/screens/DashboardScreen.js` customer and labour dashboards
+- `src/hooks/useAuthFlow.js` auth logic
+- `src/services/http.js` reusable API helper
+- `src/services/authService.js` login/signup API calls
+- `src/config/env.js` single API URL config
+- `src/components/*` reusable UI
+- `src/data/dashboardData.js` Muzaffarpur labor, profile, and job data
+- `src/utils/filterJobs.js` labor filtering logic
 
-2. Start the app
+## Current app flow
 
-   ```bash
-   npx expo start
-   ```
+### Customer
 
-In the output, you'll find options to open the app in a
+- login or signup as `Customer`
+- see 10 nearby labours
+- filter by skill, location, availability, and rating
+- view labor profile summary
+- use job posting card
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Labour
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- login or signup as `Labour`
+- open labour dashboard
+- view profile, skills, preferences, ratings, and work history
+- see nearby job requests
+- prepare for photo/profile update flow
 
-## Get a fresh project
+## APIs already connected
 
-When you're ready, run:
+### Signup
 
-```bash
-npm run reset-project
+`POST /auth/signup`
+
+Body sent by app:
+
+```json
+{
+  "name": "abhimanyu kumar",
+  "email": "abhimanyu2021@gmail.com",
+  "phone": "9262980734",
+  "password": "Abhi349#@@@#737"
+}
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Login
 
-## Learn more
+`POST /auth/login`
 
-To learn more about developing your project with Expo, look at the following resources:
+Body sent by app:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```json
+{
+  "email": "abhi@gmail3.com",
+  "password": "Abhi@123"
+}
+```
 
-## Join the community
+## Step by step for beginner
 
-Join our community of developers creating universal apps.
+1. Open terminal in `labor-app`
+2. Run `npm install`
+3. Create `.env`
+4. Copy from `.env.example`
+5. Put your backend URL in `.env`
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Example:
+
+```env
+EXPO_PUBLIC_API_URL=http://localhost:5000/api
+```
+
+6. Start the app:
+
+```bash
+npx expo start
+```
+
+7. Open with Expo Go or emulator
+
+## Important for real phone
+
+If you test on a real Android phone, `localhost` will not work.
+
+Use your computer IP like:
+
+```env
+EXPO_PUBLIC_API_URL=http://192.168.1.5:5000/api
+```
+
+## Useful commands
+
+```bash
+npx expo start
+npm run android
+npm run web
+npm run lint
+```
+
+## Important note
+
+Right now:
+
+- auth APIs are connected
+- customer/labour dashboards use demo UI data
+- role is selected in frontend and stored in session
+
+If your backend later provides separate customer and labour auth/profile APIs, connect them in:
+
+- `src/services/authService.js`
+- `src/hooks/useAuthFlow.js`
+- `src/data/dashboardData.js` can be replaced with real API data
+
+## Next upgrades
+
+- save JWT token in AsyncStorage
+- fetch available labour list from backend
+- add real customer job posting API
+- add labour profile update API
+- add ratings and review submission API
+- add image upload for labour profile photo
+- add geolocation-based nearby labor search

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "labor-app",
-    "slug": "labor-app",
+    "name": "Bihar Labor Management",
+    "slug": "bihar-labor-management",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
