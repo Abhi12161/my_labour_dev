@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { InfoPanel } from '../components/InfoPanel';
 import { JobCard } from '../components/JobCard';
@@ -12,7 +13,6 @@ import {
     labourReviews,
     labourWorkHistory,
 } from '../data/dashboardData';
-import { colors, radius } from '../theme/tokens';
 
 /**
  * LabourDashboard Component
@@ -37,6 +37,126 @@ export function LabourDashboard({
 }) {
   // Get localized text based on selected language
   const text = copy[language];
+
+  // State for profile editing
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editedProfile, setEditedProfile] = useState({
+    name: labourProfile.name,
+    title: labourProfile.title,
+    location: labourProfile.location,
+    phone: labourProfile.phone,
+  });
+
+  // State for notifications
+  const [notifications, setNotifications] = useState([]);
+
+  // State for applied jobs
+  const [appliedJobs, setAppliedJobs] = useState([]);
+
+  /**
+   * Handle profile edit save
+   */
+  const handleSaveProfile = async () => {
+    try {
+      await saveProfileUpdate(editedProfile, session.user.id);
+      Alert.alert(text.profileUpdatedTitle, text.profileUpdatedMessage);
+      setIsEditingProfile(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    }
+  };
+
+  /**
+   * Handle profile edit cancel
+   */
+  const handleCancelEdit = () => {
+    setEditedProfile({
+      name: labourProfile.name,
+      title: labourProfile.title,
+      location: labourProfile.location,
+      phone: labourProfile.phone,
+    });
+    setIsEditingProfile(false);
+  };
+
+  /**
+   * Handle job application
+   */
+  const handleApplyForJob = (job) => {
+    if (appliedJobs.includes(job.id)) {
+      Alert.alert(text.alreadyAppliedTitle, text.alreadyAppliedMessage);
+      return;
+    }
+
+    Alert.alert(
+      text.applyConfirmTitle,
+      text.applyConfirmMessage.replace('{job}', job.title),
+      [
+        { text: text.cancel, style: 'cancel' },
+        {
+          text: text.apply,
+          onPress: async () => {
+            try {
+              setAppliedJobs(prev => [...prev, job.id]);
+
+              // Add notification
+              const notification = {
+                id: Date.now(),
+                type: 'application',
+                message: text.applicationSubmitted.replace('{job}', job.title),
+                timestamp: new Date().toISOString(),
+              };
+              setNotifications(prev => [notification, ...prev]);
+
+              // Save to admin database
+              await saveJobApplication(job, session.user);
+
+              Alert.alert(text.applicationSuccessTitle, text.applicationSuccessMessage);
+            } catch (error) {
+              // Remove from applied jobs if API call failed
+              setAppliedJobs(prev => prev.filter(id => id !== job.id));
+              Alert.alert('Error', 'Failed to submit application. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  /**
+   * Handle "Today Work" button press
+   */
+  const handleTodayWork = async () => {
+    Alert.alert(
+      text.todayWorkConfirmTitle,
+      text.todayWorkConfirmMessage,
+      [
+        { text: text.cancel, style: 'cancel' },
+        {
+          text: text.confirm,
+          onPress: async () => {
+            try {
+              // Add notification
+              const notification = {
+                id: Date.now(),
+                type: 'today_work',
+                message: text.todayWorkNotification,
+                timestamp: new Date().toISOString(),
+              };
+              setNotifications(prev => [notification, ...prev]);
+
+              // Save to admin database
+              await saveTodayWorkRequest(session.user);
+
+              Alert.alert(text.todayWorkSuccessTitle, text.todayWorkSuccessMessage);
+            } catch (error) {
+              Alert.alert('Error', 'Failed to submit today work request. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
@@ -68,6 +188,32 @@ export function LabourDashboard({
         ))}
       </View>
 
+      {/* Today Work Button */}
+      <View style={styles.todayWorkContainer}>
+        <PrimaryButton
+          label={text.todayWorkButton}
+          onPress={handleTodayWork}
+          variant="primary"
+        />
+      </View>
+
+      {/* Notifications section */}
+      {notifications.length > 0 && (
+        <View style={styles.panel}>
+          <Text style={styles.panelTitle}>{text.notificationsTitle}</Text>
+          <View style={styles.notificationList}>
+            {notifications.slice(0, 3).map((notification) => (
+              <View key={notification.id} style={styles.notificationItem}>
+                <Text style={styles.notificationText}>{notification.message}</Text>
+                <Text style={styles.notificationTime}>
+                  {new Date(notification.timestamp).toLocaleTimeString()}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
       {/* Profile section */}
       <View style={styles.panel}>
         <Text style={styles.panelTitle}>{text.profileTitle}</Text>
@@ -76,18 +222,59 @@ export function LabourDashboard({
             <Text style={styles.avatarText}>{labourProfile.photoLabel}</Text>
           </View>
           <View style={styles.profileCopy}>
-            <Text style={styles.profileName}>{labourProfile.name}</Text>
-            <Text style={styles.profileTitleText}>{labourProfile.title}</Text>
-            <Text style={styles.profileMeta}>{labourProfile.location}</Text>
-            <Text style={styles.profileMeta}>{labourProfile.phone}</Text>
-            <Text style={styles.profileMeta}>
-              {text.ratingLabel}: {labourProfile.rating} ({labourProfile.reviews})
-            </Text>
+            {isEditingProfile ? (
+              <>
+                <TextInput
+                  style={styles.editInput}
+                  value={editedProfile.name}
+                  onChangeText={(value) => setEditedProfile(prev => ({ ...prev, name: value }))}
+                  placeholder={text.namePlaceholder}
+                />
+                <TextInput
+                  style={styles.editInput}
+                  value={editedProfile.title}
+                  onChangeText={(value) => setEditedProfile(prev => ({ ...prev, title: value }))}
+                  placeholder={text.titlePlaceholder}
+                />
+                <TextInput
+                  style={styles.editInput}
+                  value={editedProfile.location}
+                  onChangeText={(value) => setEditedProfile(prev => ({ ...prev, location: value }))}
+                  placeholder={text.locationPlaceholder}
+                />
+                <TextInput
+                  style={styles.editInput}
+                  value={editedProfile.phone}
+                  onChangeText={(value) => setEditedProfile(prev => ({ ...prev, phone: value }))}
+                  placeholder={text.phonePlaceholder}
+                  keyboardType="phone-pad"
+                />
+              </>
+            ) : (
+              <>
+                <Text style={styles.profileName}>{labourProfile.name}</Text>
+                <Text style={styles.profileTitleText}>{labourProfile.title}</Text>
+                <Text style={styles.profileMeta}>{labourProfile.location}</Text>
+                <Text style={styles.profileMeta}>{labourProfile.phone}</Text>
+                <Text style={styles.profileMeta}>
+                  {text.ratingLabel}: {labourProfile.rating} ({labourProfile.reviews})
+                </Text>
+              </>
+            )}
           </View>
         </View>
         <View style={styles.buttonRow}>
-          <PrimaryButton label={text.updateSkills} onPress={() => {}} variant="ghost" />
-          <PrimaryButton label={text.editProfile} onPress={() => {}} variant="ghost" />
+          {isEditingProfile ? (
+            <>
+              <PrimaryButton label={text.save} onPress={handleSaveProfile} />
+              <PrimaryButton label={text.cancel} onPress={handleCancelEdit} variant="ghost" />
+            </>
+          ) : (
+            <>
+              <PrimaryButton label={text.updateSkills} onPress={() => {}} variant="ghost" />
+              <PrimaryButton label={text.editProfile} onPress={() => setIsEditingProfile(true)} variant="ghost" />
+            </>
+          )}
         </View>
       </View>
 
@@ -120,7 +307,14 @@ export function LabourDashboard({
         <Text style={styles.panelTitle}>{text.availableJobsTitle}</Text>
         <View style={styles.jobsList}>
           {postedJobs.map((job) => (
-            <JobCard key={job.id} copy={text} job={job} actionLabel={text.applyNow} />
+            <JobCard
+              key={job.id}
+              copy={text}
+              job={job}
+              actionLabel={appliedJobs.includes(job.id) ? text.applied : text.applyNow}
+              onActionPress={() => handleApplyForJob(job)}
+              disabled={appliedJobs.includes(job.id)}
+            />
           ))}
         </View>
       </View>
@@ -281,6 +475,39 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: 12,
+  },
+  editInput: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: colors.panelMuted,
+    color: colors.text,
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  todayWorkContainer: {
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  notificationList: {
+    gap: 8,
+  },
+  notificationItem: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.md,
+    padding: 12,
+    gap: 4,
+  },
+  notificationText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  notificationTime: {
+    color: colors.textMuted,
+    fontSize: 12,
   },
   skillRow: {
     flexDirection: 'row',

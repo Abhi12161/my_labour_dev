@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius } from '../theme/tokens';
 
-export function JobCard({ copy, job, actionLabel }) {
+export function JobCard({ copy, job, actionLabel, onActionPress, disabled = false }) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -27,8 +27,12 @@ export function JobCard({ copy, job, actionLabel }) {
       </View>
 
       {actionLabel ? (
-        <Pressable style={styles.actionButton}>
-          <Text style={styles.actionLabel}>{actionLabel}</Text>
+        <Pressable
+          style={[styles.actionButton, disabled && styles.disabledButton]}
+          onPress={onActionPress}
+          disabled={disabled}
+        >
+          <Text style={[styles.actionLabel, disabled && styles.disabledLabel]}>{actionLabel}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -83,8 +87,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 11,
   },
+  disabledButton: {
+    backgroundColor: colors.panelMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   actionLabel: {
     color: colors.panel,
     fontWeight: '800',
+  },
+  disabledLabel: {
+    color: colors.textMuted,
   },
 });
