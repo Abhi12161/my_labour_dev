@@ -13,6 +13,7 @@ import {
   labourReviews,
   labourWorkHistory,
 } from '../data/dashboardData';
+import { saveJobApplication, saveProfileUpdate, saveTodayWorkRequest } from '../services/http';
 import { colors, radius } from '../theme/tokens';
 
 /**
@@ -62,7 +63,7 @@ export function LabourDashboard({
       await saveProfileUpdate(editedProfile, session.user.id);
       Alert.alert(text.profileUpdatedTitle, text.profileUpdatedMessage);
       setIsEditingProfile(false);
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
@@ -113,7 +114,7 @@ export function LabourDashboard({
               await saveJobApplication(job, session.user);
 
               Alert.alert(text.applicationSuccessTitle, text.applicationSuccessMessage);
-            } catch (error) {
+            } catch (_error) {
               // Remove from applied jobs if API call failed
               setAppliedJobs(prev => prev.filter(id => id !== job.id));
               Alert.alert('Error', 'Failed to submit application. Please try again.');
@@ -150,7 +151,7 @@ export function LabourDashboard({
               await saveTodayWorkRequest(session.user);
 
               Alert.alert(text.todayWorkSuccessTitle, text.todayWorkSuccessMessage);
-            } catch (error) {
+            } catch (_error) {
               Alert.alert('Error', 'Failed to submit today work request. Please try again.');
             }
           }

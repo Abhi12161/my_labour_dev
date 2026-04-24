@@ -1,11 +1,6 @@
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Location from 'expo-location';
-import { useEffect, useRef, useState } from 'react';
+// React hooks not required in this file; component is functional only
 import {
-  ActivityIndicator,
-  Animated,
-  Linking,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -15,74 +10,14 @@ import {
 } from 'react-native';
 
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { LocationCard } from '../components/LocationCard';
 import { copy } from '../constants/copy';
 import { colors } from '../theme/tokens';
 
 export function RoleSelectionScreen({ language, onChangeLanguage, onSelectRole }) {
   const text = copy[language];
 
-  const [locationName, setLocationName] = useState('');
-  const [loadingLocation, setLoadingLocation] = useState(true);
-  const [longitude, setLongitude] = useState('');
-  const [latitude, setLatitude] = useState('');
-
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.3,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
-
-  const getLocation = async () => {
-    try {
-      setLoadingLocation(true);
-
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setLocationName('Permission denied');
-        return;
-      }
-
-      let loc = await Location.getCurrentPositionAsync({});
-      setLatitude(loc.coords.latitude);
-      setLongitude(loc.coords.longitude);
-
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${loc.coords.latitude}&lon=${loc.coords.longitude}`
-      );
-
-      const data = await response.json();
-      setLocationName(data.display_name || 'Unknown location');
-
-    } catch (e) {
-      console.log(e);
-      setLocationName('Error fetching location');
-    } finally {
-      setLoadingLocation(false);
-    }
-  };
-
-  const openMap = () => {
-    if (!latitude || !longitude) return;
-    const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    Linking.openURL(url);
-  };
-
-  useEffect(() => {
-    getLocation();
-  }, []);
+  // Location is handled by the LocationCard component
 
   const roles = [
     {
@@ -119,35 +54,7 @@ export function RoleSelectionScreen({ language, onChangeLanguage, onSelectRole }
         </View>
 
         {/* Location Card */}
-        <BlurView intensity={70} tint="light" style={styles.glassCard}>
-          <View style={styles.leftSection}>
-            <Animated.Text
-              style={[
-                styles.locationIcon,
-                { transform: [{ scale: pulseAnim }] },
-              ]}
-            >
-              📍
-            </Animated.Text>
-            <View style={styles.liveDot} />
-          </View>
-
-          <View style={{ flex: 1 }}>
-            <Text style={styles.locationTitle}>Live Location</Text>
-
-            {loadingLocation ? (
-              <ActivityIndicator size="small" color="#4f46e5" />
-            ) : (
-              <Text style={styles.locationText} numberOfLines={1}>
-                {locationName}
-              </Text>
-            )}
-          </View>
-
-          <Pressable onPress={openMap} style={styles.mapButton}>
-            <Text style={styles.mapIcon}>🗺️</Text>
-          </Pressable>
-        </BlurView>
+        <LocationCard text={text} />
 
         {/* Hero */}
         <View style={styles.heroSection}>
