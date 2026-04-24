@@ -8,7 +8,7 @@ import { RoleSelectionScreen } from '../screens/RoleSelectionScreen';
 import { colors } from '../theme/tokens';
 
 export default function RootApp() {
-  const [language, setLanguage] = useState('bho');
+  const [language, setLanguage] = useState('en');
   const [session, setSession] = useState(null);
   const [selectedRole, setSelectedRole] = useState(null);
   const [postedJobs, setPostedJobs] = useState(initialPostedJobs);

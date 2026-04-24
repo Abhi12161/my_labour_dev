@@ -11,12 +11,12 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { StatCard } from '../components/StatCard';
 import { copy } from '../constants/copy';
 import {
-    availableLabours,
-    customerMessages,
-    customerOverviewStats,
-    jobPostOptions,
-    labourFilterOptions,
-    popularSkills,
+  availableLabours,
+  customerMessages,
+  customerOverviewStats,
+  jobPostOptions,
+  labourFilterOptions,
+  popularSkills,
 } from '../data/dashboardData';
 import { colors, radius } from '../theme/tokens';
 import { filterJobs } from '../utils/filterJobs';

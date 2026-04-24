@@ -1,16 +1,14 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius } from '../theme/tokens';
-
 const languages = [
-  { code: 'en', label: 'Engl' },
+  { code: 'en', label: 'English' },
   { code: 'hi', label: 'हिंदी' },
   { code: 'bho', label: 'भोजपुरी' },
 ];
 
-export function LanguageSwitcher({ selected, onChange, light = false }) {
+export function LanguageSwitcher({ selected, onChange }) {
   return (
-    <View style={styles.row}>
+    <View style={styles.container}>
       {languages.map((language) => {
         const active = selected === language.code;
 
@@ -18,8 +16,9 @@ export function LanguageSwitcher({ selected, onChange, light = false }) {
           <Pressable
             key={language.code}
             onPress={() => onChange(language.code)}
-            style={[styles.chip, light ? styles.chipLight : styles.chipDark, active && styles.activeChip]}>
-            <Text style={[styles.label, light ? styles.labelLight : styles.labelDark, active && styles.activeLabel]}>
+            style={[styles.tab, active && styles.activeTab]}
+          >
+            <Text style={[styles.label, active && styles.activeLabel]}>
               {language.label}
             </Text>
           </Pressable>
@@ -30,36 +29,47 @@ export function LanguageSwitcher({ selected, onChange, light = false }) {
 }
 
 const styles = StyleSheet.create({
-  row: {
+  // 🔥 Main pill container (second image jaisa)
+  container: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    backgroundColor: '#f1f1f1',
+    borderRadius: 999,
+    padding: 4,
+    alignSelf: 'center',
+
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  chip: {
-    paddingHorizontal: 12,
+
+  // 🔹 Each tab
+  tab: {
     paddingVertical: 8,
-    borderRadius: radius.sm,
+    paddingHorizontal: 14,
+    borderRadius: 999,
   },
-  chipDark: {
-    backgroundColor: 'rgba(255,255,255,0.14)',
+
+  // 🔥 Active tab (white pill)
+  activeTab: {
+    backgroundColor: '#ffffff',
+
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  chipLight: {
-    backgroundColor: colors.panelMuted,
-  },
-  activeChip: {
-    backgroundColor: colors.panel,
-  },
+
   label: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#777',
   },
-  labelDark: {
-    color: colors.panel,
-  },
-  labelLight: {
-    color: colors.textMuted,
-  },
+
   activeLabel: {
-    color: colors.primary,
+    color: '#000',
+    fontWeight: '700',
   },
 });
