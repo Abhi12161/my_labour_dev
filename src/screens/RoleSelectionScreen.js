@@ -1,4 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 // React hooks not required in this file; component is functional only
 import {
   Pressable,
@@ -16,6 +18,15 @@ import { colors } from '../theme/tokens';
 
 export function RoleSelectionScreen({ language, onChangeLanguage, onSelectRole }) {
   const text = copy[language];
+
+   const location = useSelector((state) => state.location);
+
+  useEffect(() => {
+    console.log('FULL LOCATION DATA 👉', location.fullData);
+    console.log('CITY 👉', location.fullData?.address?.city);
+    console.log('STATE 👉', location.fullData?.address?.state);
+    console.log('COUNTRY 👉', location.fullData?.address?.country);
+  }, [location]);
 
   // Location is handled by the LocationCard component
 
@@ -45,7 +56,7 @@ export function RoleSelectionScreen({ language, onChangeLanguage, onSelectRole }
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.logo}>💼</Text>
-          <Text style={styles.appName}>Muzaffarpur Labor Hub</Text>
+          <Text style={styles.appName}>{text.badge}</Text>
 
           <LanguageSwitcher
             selected={language}

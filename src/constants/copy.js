@@ -105,8 +105,7 @@ export const copy = {
     cancel: 'Cancel',
     namePlaceholder: 'Enter your name',
     titlePlaceholder: 'Enter your job title',
-    locationPlaceholder: 'Enter your location',
-    phonePlaceholder: 'Enter your phone number',
+  
     profileUpdatedTitle: 'Profile Updated',
     profileUpdatedMessage: 'Your profile has been updated successfully.',
     apply: 'Apply',
@@ -246,8 +245,7 @@ export const copy = {
     cancel: 'Cancel Karein',
     namePlaceholder: 'Apna naam likhiye',
     titlePlaceholder: 'Apna job title likhiye',
-    locationPlaceholder: 'Apna location likhiye',
-    phonePlaceholder: 'Apna phone number likhiye',
+  
     profileUpdatedTitle: 'Profile Update Ho Gaya',
     profileUpdatedMessage: 'Aapka profile successfully update ho gaya hai.',
     apply: 'Apply Karein',
@@ -387,8 +385,7 @@ export const copy = {
     cancel: 'Cancel करीं',
     namePlaceholder: 'अपना नाम लिखीं',
     titlePlaceholder: 'अपना job title लिखीं',
-    locationPlaceholder: 'अपना location लिखीं',
-    phonePlaceholder: 'अपना phone number लिखीं',
+   
     profileUpdatedTitle: 'Profile Update हो गइल',
     profileUpdatedMessage: 'रउरा profile सफलतापूर्वक update हो गइल बा.',
     apply: 'Apply करीं',
