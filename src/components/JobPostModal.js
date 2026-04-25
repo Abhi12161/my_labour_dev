@@ -1,15 +1,16 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useEffect, useState } from 'react';
 import {
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
 } from 'react-native';
 
-import { colors, radius } from '../theme/tokens';
+import { colors } from '../theme/tokens';
 import { PrimaryButton } from './PrimaryButton';
 
 const initialForm = {
@@ -33,8 +34,16 @@ function OptionGroup({ label, options, value, onChange }) {
             <Pressable
               key={option}
               onPress={() => onChange(option)}
-              style={[styles.optionChip, active && styles.optionChipActive]}>
-              <Text style={[styles.optionText, active && styles.optionTextActive]}>{option}</Text>
+              style={[styles.optionChip, active && styles.optionChipActive]}
+            >
+              <Text
+                style={[
+                  styles.optionText,
+                  active && styles.optionTextActive,
+                ]}
+              >
+                {option}
+              </Text>
             </Pressable>
           );
         })}
@@ -43,8 +52,18 @@ function OptionGroup({ label, options, value, onChange }) {
   );
 }
 
-export function JobPostModal({ copy, onClose, onSubmit, options, visible }) {
+export function JobPostModal({
+  copy,
+  onClose,
+  onSubmit,
+  options,
+  visible,
+}) {
   const [form, setForm] = useState(initialForm);
+
+  // 🔥 NEW (date picker state)
+  const [showPicker, setShowPicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
     if (visible) {
@@ -62,9 +81,16 @@ export function JobPostModal({ copy, onClose, onSubmit, options, visible }) {
   };
 
   return (
-    <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
+    <Modal
+      animationType="slide"
+      transparent
+      visible={visible}
+      onRequestClose={onClose}
+    >
       <View style={styles.overlay}>
         <View style={styles.sheet}>
+          
+          {/* HEADER */}
           <View style={styles.header}>
             <Text style={styles.title}>{copy.postJobTitle}</Text>
             <Pressable onPress={onClose} style={styles.closeButton}>
@@ -72,7 +98,11 @@ export function JobPostModal({ copy, onClose, onSubmit, options, visible }) {
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.content}
+          >
+            {/* TITLE */}
             <View style={styles.group}>
               <Text style={styles.label}>{copy.jobTitle}</Text>
               <TextInput
@@ -84,6 +114,7 @@ export function JobPostModal({ copy, onClose, onSubmit, options, visible }) {
               />
             </View>
 
+            {/* SKILL */}
             <OptionGroup
               label={copy.requiredSkill}
               options={options.skills}
@@ -91,18 +122,22 @@ export function JobPostModal({ copy, onClose, onSubmit, options, visible }) {
               onChange={(value) => updateField('skill', value)}
             />
 
+            {/* DESCRIPTION */}
             <View style={styles.group}>
               <Text style={styles.label}>{copy.description}</Text>
               <TextInput
                 multiline
                 style={[styles.input, styles.textarea]}
                 value={form.description}
-                onChangeText={(value) => updateField('description', value)}
+                onChangeText={(value) =>
+                  updateField('description', value)
+                }
                 placeholder={copy.descriptionPlaceholder}
                 placeholderTextColor={colors.textMuted}
               />
             </View>
 
+            {/* CITY */}
             <OptionGroup
               label={copy.locationLabel}
               options={options.cities}
@@ -110,13 +145,41 @@ export function JobPostModal({ copy, onClose, onSubmit, options, visible }) {
               onChange={(value) => updateField('city', value)}
             />
 
+            {/* DATE / TIME */}
             <OptionGroup
               label={copy.dateTime}
               options={options.timings}
               value={form.timing}
-              onChange={(value) => updateField('timing', value)}
+              onChange={(value) => {
+                updateField('timing', value);
+
+                if (value === 'Specific Date') {
+                  setShowPicker(true);
+                }
+              }}
             />
 
+            {/* 🔥 DATE PICKER */}
+            {showPicker && (
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display="default"
+                onChange={(event, date) => {
+                  setShowPicker(false);
+
+                  if (date) {
+                    setSelectedDate(date);
+                    updateField(
+                      'timing',
+                      date.toDateString()
+                    );
+                  }
+                }}
+              />
+            )}
+
+            {/* LEVEL */}
             <OptionGroup
               label={copy.skillLevel}
               options={options.levels}
@@ -125,7 +188,10 @@ export function JobPostModal({ copy, onClose, onSubmit, options, visible }) {
             />
           </ScrollView>
 
-          <PrimaryButton label={copy.postJobButton} onPress={submit} />
+          <PrimaryButton
+            label={copy.postJobButton}
+            onPress={submit}
+          />
         </View>
       </View>
     </Modal>
@@ -138,85 +204,100 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(11, 18, 20, 0.55)',
     justifyContent: 'flex-end',
   },
+
   sheet: {
-    backgroundColor: colors.panel,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     maxHeight: '88%',
     padding: 20,
     paddingBottom: 24,
     gap: 16,
+
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
   },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
   },
+
   title: {
-    color: colors.text,
+    color: '#111',
     fontSize: 20,
     fontWeight: '800',
-    flexShrink: 1,
   },
+
   closeButton: {
-    backgroundColor: colors.panelMuted,
-    borderRadius: radius.sm,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    minWidth: 72,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
+
   closeLabel: {
-    color: colors.textMuted,
-    fontWeight: '700',
+    color: '#374151',
+    fontWeight: '600',
   },
+
   content: {
     gap: 14,
     paddingBottom: 8,
   },
+
   group: {
     gap: 8,
   },
+
   label: {
-    color: colors.text,
+    color: '#111',
     fontWeight: '700',
   },
+
   input: {
-    minHeight: 52,
-    borderRadius: radius.md,
+    minHeight: 50,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.panelMuted,
-    paddingHorizontal: 16,
-    color: colors.text,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#f9fafb',
+    paddingHorizontal: 14,
+    color: '#111',
   },
+
   textarea: {
-    minHeight: 110,
-    paddingVertical: 14,
+    minHeight: 100,
+    paddingVertical: 12,
     textAlignVertical: 'top',
   },
+
   optionsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
+
   optionChip: {
-    backgroundColor: colors.panelMuted,
-    borderRadius: radius.sm,
-    paddingHorizontal: 12,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 999,
+    paddingHorizontal: 14,
     paddingVertical: 10,
   },
+
   optionChipActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#1f7a63',
   },
+
   optionText: {
-    color: colors.textMuted,
+    color: '#374151',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
+
   optionTextActive: {
-    color: colors.panel,
+    color: '#fff',
   },
 });
