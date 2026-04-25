@@ -56,7 +56,7 @@ export function RoleSelectionScreen({ language, onChangeLanguage, onSelectRole }
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.logo}>💼</Text>
-          <Text style={styles.appName}>{text.badge}</Text>
+          <Text style={styles.appName}>{location.fullData?.address?.city}{text.badge}</Text>
 
           <LanguageSwitcher
             selected={language}
@@ -109,6 +109,14 @@ export function RoleSelectionScreen({ language, onChangeLanguage, onSelectRole }
               </LinearGradient>
             </Pressable>
           ))}
+        </View>
+
+           <View style={styles.footer}>
+          <Text style={styles.footerText}>{text.allCitiesAvailable || 'Available in your area'}{location.fullData?.address?.city}</Text>
+          <Text style={styles.footerSubtext}>
+            {text.footerBenefits ||
+              'Live opportunities nearby • Better worker-employer matching • Professional first impression'}
+          </Text>
         </View>
 
       </ScrollView>
@@ -271,5 +279,24 @@ const styles = StyleSheet.create({
   ctaText: {
     fontWeight: '800',
     color: '#111',
+  },
+   footer: {
+    backgroundColor: colors.panelMuted,
+    // borderRadius: radius.lg,
+    padding: 16,
+    gap: 8,
+    marginTop: 16,
+  },
+  footerText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  footerSubtext: {
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });

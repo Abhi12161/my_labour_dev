@@ -1,8 +1,11 @@
 export const customerOverviewStats = [
-  { id: 'labours', labelKey: 'activeLabours', value: '10' },
-  { id: 'jobs', labelKey: 'liveJobs', value: '14' },
-  { id: 'rating', labelKey: 'avgRating', value: '4.8' },
-  { id: 'hires', labelKey: 'hiresToday', value: '06' },
+  { id: 'labours', labelKey: 'activeLabours', value: 10 },
+  { id: 'jobs', labelKey: 'liveJobs', value: 14 },
+  { id: 'rating', labelKey: 'avgRating', value: 4.8 },
+  { id: 'hires', labelKey: 'hiresToday', value: 6 },
+ 
+  { id: 'completed', labelKey: 'jobsCompleted', value: 32 },
+  { id: 'pending', labelKey: 'pendingRequests', value: 5 },
 ];
 
 export const labourOverviewStats = [

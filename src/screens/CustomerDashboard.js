@@ -1,12 +1,12 @@
 import { startTransition, useDeferredValue, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSelector } from 'react-redux';
 
 import { FilterBar } from '../components/FilterBar';
 import { InfoPanel } from '../components/InfoPanel';
 import { JobCard } from '../components/JobCard';
 import { JobPostModal } from '../components/JobPostModal';
 import { LabourCard } from '../components/LabourCard';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { StatCard } from '../components/StatCard';
 import { copy } from '../constants/copy';
@@ -52,6 +52,8 @@ export function CustomerDashboard({
 }) {
   // Get localized text based on selected language
   const text = copy[language];
+  
+   const location = useSelector((state) => state.location);
 
   // State for labour filtering
   const [filters, setFilters] = useState(initialFilters);
@@ -108,39 +110,89 @@ export function CustomerDashboard({
     setJobModalVisible(false);
     Alert.alert(text.jobPostedTitle, text.jobPostedBody);
   };
+  const gradients = [
+    ['#ff7e5f', '#feb47b'],   // orange
+    ['#43cea2', '#185a9d'],   // teal-blue
+    ['#667eea', '#764ba2'],   // purple
+    ['#f7971e', '#ffd200'],   // yellow
+    ['#00c6ff', '#0072ff'],   // 🔥 completed - blue pop
+    ['#f857a6', '#ff5858'],   // 🔥 pending - pink/red alert
+  ];
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       {/* Hero section with user greeting and logout */}
-      <View style={styles.hero}>
-        <View style={styles.heroTop}>
-          <View style={styles.heroCopy}>
-            <Text style={styles.heroBadge}>{text.customerDashboardBadge}</Text>
-            <Text style={styles.heroTitle}>
-              {text.hello}, {session.user.name}
-            </Text>
-            <Text style={styles.heroSubtitle}>{text.customerSubtitle}</Text>
-          </View>
-          <PrimaryButton label={text.logout} onPress={onLogout} variant="ghost" />
-        </View>
+    <View style={styles.hero}>
 
-        <LanguageSwitcher selected={language} onChange={onChangeLanguage} />
+  {/* Top Row */}
+  <View style={styles.heroTop}>
 
-        <View style={styles.profileBar}>
-          <Text style={styles.profileText}>{session.user.email}</Text>
-          <Text style={styles.profileText}>{session.user.phone}</Text>
-        </View>
+    <View style={styles.heroCopy}>
+
+      {/* Badge */}
+      <View style={styles.badgeWrap}>
+        <Text style={styles.heroBadge}>
+          {text.customerDashboardBadge}
+        </Text>
       </View>
+
+      {/* Greeting */}
+      <Text style={styles.heroTitle}>
+        {text.hello},{" "}
+        <Text style={styles.name}>{session.user.name}</Text>
+      </Text>
+
+      {/* Subtitle */}
+      <Text style={styles.heroSubtitle}>
+        {text.customerSubtitle}
+      </Text>
+
+    </View>
+
+    {/* Logout Button */}
+    <PrimaryButton
+      label={text.logout}
+      onPress={onLogout}
+      variant="ghost"
+    />
+
+  </View>
+
+  {/* Profile Info Section */}
+  <View style={styles.profileCard}>
+    <Text style={styles.profileText}>
+      📧 {session.user.email}
+    </Text>
+    <Text style={styles.profileText}>
+      📱 {session.user.phone}
+    </Text>
+  </View>
+
+</View>
 
       {/* Overview statistics grid */}
       <View style={styles.statsGrid}>
-        {customerOverviewStats.map((item) => (
-          <StatCard key={item.id} label={text[item.labelKey]} value={item.value} />
+        {customerOverviewStats.map((item, index) => (
+          <StatCard
+            key={item.id}
+            label={text[item.labelKey]}
+            value={item.value}
+            icon={
+              item.id === 'completed'
+                ? 'checkmark-done'
+                : item.id === 'pending'
+                  ? 'time'
+                  : 'people'
+            }
+            trend={index % 2 === 0 ? 'up' : 'down'}
+            gradient={gradients[index % gradients.length]}
+            onPress={() => console.log('Clicked', item.labelKey)}
+          />
         ))}
       </View>
 
       {/* Information panel about Muzaffarpur focus */}
-      <InfoPanel title={text.focusMuzaffarpur} body={text.focusMuzaffarpurBody} tone="accent" />
+      <InfoPanel title={`${text.focusMuzaffarpur}${location.fullData?.address?.city || ''}`} body={text.focusMuzaffarpurBody} tone="accent" />
 
       {/* Job posting section */}
       <Pressable style={styles.postJobBar} onPress={() => setJobModalVisible(true)}>
@@ -235,53 +287,76 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
     gap: 18,
   },
-  hero: {
-    backgroundColor: colors.hero,
-    borderRadius: radius.xl,
-    padding: 24,
-    gap: 18,
-  },
-  heroTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  heroCopy: {
-    flex: 1,
-    gap: 8,
-  },
-  heroBadge: {
-    // alignSelf: 'flex-start',
-    backgroundColor: colors.accent,
-    color: colors.panel,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: '800',
-    maxWidth:135
-  },
-  heroTitle: {
-    color: colors.panel,
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '800',
-  },
-  heroSubtitle: {
-    color: '#d9e6e0',
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  profileBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  profileText: {
-    color: '#d9e6e0',
-    fontSize: 13,
-  },
+hero: {
+  backgroundColor: '#0f2f2a', // deep premium green
+  borderRadius: 24,
+  padding: 22,
+  gap: 18,
+
+  shadowColor: '#000',
+  shadowOpacity: 0.25,
+  shadowRadius: 15,
+  shadowOffset: { width: 0, height: 8 },
+
+  elevation: 6,
+},
+
+heroTop: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  gap: 12,
+},
+
+heroCopy: {
+  flex: 1,
+  gap: 8,
+},
+
+badgeWrap: {
+  alignSelf: 'flex-start',
+  backgroundColor: '#ff9f1c',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 999,
+},
+
+heroBadge: {
+  color: '#fff',
+  fontSize: 12,
+  fontWeight: '800',
+},
+
+heroTitle: {
+  color: '#fff',
+  fontSize: 26,
+  fontWeight: '800',
+  lineHeight: 34,
+},
+
+name: {
+  color: '#00e6a8', // highlight name
+},
+
+heroSubtitle: {
+  color: 'rgba(255,255,255,0.75)',
+  fontSize: 14,
+  lineHeight: 20,
+},
+
+profileCard: {
+  backgroundColor: 'rgba(255,255,255,0.08)',
+  padding: 12,
+  borderRadius: 14,
+  gap: 6,
+  borderWidth: 1,
+  borderColor: 'rgba(255,255,255,0.08)',
+},
+
+profileText: {
+  color: 'rgba(255,255,255,0.85)',
+  fontSize: 13,
+},
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
