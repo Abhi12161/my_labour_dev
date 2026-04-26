@@ -21,8 +21,8 @@ export function PrimaryButton({ label, loading, onPress, variant = 'primary' }) 
 
 const styles = StyleSheet.create({
   button: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   },
   ghostButton: {
     backgroundColor: colors.panelMuted,
-    borderWidth: 1,
+    // borderWidth: 1,
     borderColor: colors.border,
   },
   label: {

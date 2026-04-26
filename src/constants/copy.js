@@ -1,7 +1,9 @@
 export const copy = {
   en: {
-    badge: 'Muzaffarpur Labor Hub',
-    headline: 'Simple hiring and job matching for Muzaffarpur',
+    address: 'Address',
+    addressPlaceholder: 'Enter your address',
+    badge: ' Labor Hub',
+    headline: 'Simple hiring and job matching for ',
     subheadline:
       'A clean customer and labour platform with Bhojpuri, Hindi, posting, matching, ratings, and chat-ready sections.',
     login: 'Login',
@@ -35,8 +37,8 @@ export const copy = {
     labourRoleDescription: 'Build a strong profile for your work, highlight your skills, and get discovered by customers looking for reliable local professionals.',
     startHiring: 'Start Hiring',
     signUpWorker: 'Sign up as a worker',
-    allCitiesAvailable: 'Available in Muzaffarpur',
-    footerBenefits: 'Live opportunities in Muzaffarpur • Better worker-employer matching • Professional first impression',
+    allCitiesAvailable: 'Available in ',
+    footerBenefits: 'Live opportunities in  • Better worker-employer matching • Professional first impression',
     envTitle: 'Single API configuration',
     envBody: 'Set EXPO_PUBLIC_API_URL once in your .env file and keep your API calls clean.',
     missingTitle: 'Missing information',
@@ -52,11 +54,13 @@ export const copy = {
     customerSubtitle:
       'Search labour by skill, area, and availability, then post work in a clean simple flow.',
     labourSubtitle:
-      'Update skills, keep your profile neat, and browse matching jobs near Muzaffarpur.',
+      'Update skills, keep your profile neat, and browse matching jobs near .',
     activeLabours: 'Available labour',
     liveJobs: 'Live jobs',
     avgRating: 'Avg rating',
     hiresToday: 'Hires today',
+    jobsCompleted: 'Jobs completed',
+    pendingRequests: 'Pending requests',
     matchesToday: 'Matches today',
     profileViews: 'Profile views',
     completedJobs: 'Completed jobs',
@@ -68,7 +72,7 @@ export const copy = {
     availability: 'Availability',
     rating: 'Rating',
     clearFilters: 'Clear filters',
-    availableLaboursTitle: 'Available labour in Muzaffarpur',
+    availableLaboursTitle: 'Available labour in ',
     noLabours: 'No labour found for the current filters.',
     popularSkillsTitle: 'Popular skills',
     postJobTitle: 'Post a job',
@@ -79,7 +83,7 @@ export const copy = {
     dateTime: 'Date and time',
     dateTimePlaceholder: 'Today, 4:00 PM',
     locationLabel: 'Location',
-    locationPlaceholder: 'Motijheel, Bela, Muzaffarpur...',
+    locationPlaceholder: 'Motijheel, Bela, ...',
     description: 'Job description',
     descriptionPlaceholder: 'Write the work details clearly',
     skillLevel: 'Skill level',
@@ -105,8 +109,7 @@ export const copy = {
     cancel: 'Cancel',
     namePlaceholder: 'Enter your name',
     titlePlaceholder: 'Enter your job title',
-    locationPlaceholder: 'Enter your location',
-    phonePlaceholder: 'Enter your phone number',
+
     profileUpdatedTitle: 'Profile Updated',
     profileUpdatedMessage: 'Your profile has been updated successfully.',
     apply: 'Apply',
@@ -128,9 +131,9 @@ export const copy = {
     notifyTitle: 'Notifications',
     notifyCustomer: 'Get alerts when a labour responds, job is accepted, or someone becomes available nearby.',
     notifyLabour: 'Get alerts when a new job matches your skill and preferred time.',
-    focusMuzaffarpur: 'Primary area: Muzaffarpur',
-    focusMuzaffarpurBody:
-      'The platform highlights jobs and labour around Muzaffarpur first, with simple city-based filters.',
+    focus: 'Primary area: ',
+    focusBody:
+      'The platform highlights jobs and labour around  first, with simple city-based filters.',
     messengerTitle: 'Chat and messages',
     messengerCustomer: 'Chat directly with labour after shortlisting or hiring.',
     messengerLabour: 'Reply to customers directly when jobs match your skill.',
@@ -139,151 +142,225 @@ export const copy = {
     today: 'Today',
     tomorrow: 'Tomorrow',
     specificDate: 'Specific Date',
-  },
-  hi: {
-    badge: 'Muzaffarpur Labor Hub',
-    headline: 'Muzaffarpur ke liye saaf aur asaan hiring platform',
-    subheadline:
-      'Customer aur labour dono ke liye clean login, job posting, matching, rating aur chat-ready sections.',
-    login: 'Login',
-    signup: 'Signup',
-    customer: 'Customer',
-    labour: 'Labour',
-    roleTitle: 'Account type chuniye',
-    customerRoleBody: 'Job post kijiye, skilled labour dhoondhiye aur jaldi hire kijiye.',
-    labourRoleBody: 'Profile, skill, availability aur matching jobs manage kijiye.',
-    welcomeBack: 'Wapas swagat hai',
-    createAccount: 'Account banaiye',
-    loginDescription: 'Sirf zaroori details ke saath login kijiye aur seedha dashboard par jaiye.',
-    signupDescription: 'Jaldi register kijiye aur apne role ke hisab se tools use kijiye.',
-    fullName: 'Pura naam',
-    fullNamePlaceholder: 'Apna pura naam likhiye',
-    email: 'Email',
-    emailPlaceholder: 'Apna email likhiye',
-    phone: 'Mobile number',
-    phonePlaceholder: 'Apna mobile number likhiye',
-    password: 'Password',
-    passwordPlaceholder: 'Apna password likhiye',
-    submitLogin: 'Dashboard kholiye',
-    submitSignup: 'Account banaiye',
-    switchToLogin: 'Pehle se account hai? Login kijiye',
-    switchToSignup: 'Account nahi hai? Signup kijiye',
-    demoButton: 'Demo kholiye',
-    back: 'Wapas',
-    needWorkers: 'Mujhe workers chahiye',
-    offerServices: 'Main service de sakta hoon',
-    customerRoleDescription: 'Apni project details post kijiye aur quickly apne area ke millions workers, electricians, plumbers se connect kijiye.',
-    labourRoleDescription: 'Apne kaam ka strong profile banaiye, apni skills highlight kijiye aur customers se discovered hote jaiye.',
-    startHiring: 'Hiring Shuru Kijiye',
-    signUpWorker: 'Worker ke taur par signup kijiye',
-    allCitiesAvailable: 'Muzaffarpur me available hai',
-    footerBenefits: 'Muzaffarpur me opportunities • Better worker-employer matching • Professional first impression',
-    envTitle: 'Ek hi API configuration',
-    envBody: '.env me EXPO_PUBLIC_API_URL set kijiye, fir sab API calls clean rahengi.',
-    missingTitle: 'Jankari adhoori hai',
-    missingBody: 'Aage badhne se pehle zaroori fields bhariye.',
-    successTitle: 'Safal',
-    loginSuccess: 'Login safal raha.',
-    signupSuccess: 'Signup safal raha.',
-    errorTitle: 'Request fail hui',
-    logout: 'Logout',
-    customerDashboardBadge: 'Customer Home',
-    labourDashboardBadge: 'Labour Dashboard',
-    hello: 'Namaste',
-    customerSubtitle:
-      'Skill, area aur availability ke hisab se labour dhoondhiye, phir simple flow me job post kijiye.',
-    labourSubtitle:
-      'Skill update rakhiye, profile saaf rakhiye aur Muzaffarpur ke matching jobs dekhiye.',
-    activeLabours: 'Available labour',
-    liveJobs: 'Live jobs',
-    avgRating: 'Avg rating',
-    hiresToday: 'Aaj hire',
-    matchesToday: 'Aaj matching jobs',
-    profileViews: 'Profile views',
-    completedJobs: 'Completed jobs',
-    responseRate: 'Response rate',
-    filtersTitle: 'Filters',
-    searchPlaceholder: 'Skill, naam ya area se search kijiye',
-    district: 'Shehar / Area',
-    category: 'Skill',
-    availability: 'Availability',
-    rating: 'Rating',
-    clearFilters: 'Filters hataiye',
-    availableLaboursTitle: 'Muzaffarpur me available labour',
-    noLabours: 'Current filters me koi labour nahi mila.',
-    popularSkillsTitle: 'Popular skills',
-    postJobTitle: 'Job post kijiye',
-    postJobOpen: 'Post Job',
-    jobTitle: 'Job title',
-    jobTitlePlaceholder: '2 ghante ke liye Raj Mistri chahiye',
-    requiredSkill: 'Required skill',
-    dateTime: 'Date aur time',
-    dateTimePlaceholder: 'Aaj, 4:00 PM',
-    locationLabel: 'Location',
-    locationPlaceholder: 'Motijheel, Bela, Muzaffarpur...',
-    description: 'Job description',
-    descriptionPlaceholder: 'Kaam ka detail saaf likhiye',
-    skillLevel: 'Skill level',
-    postJobButton: 'Job Publish Karein',
-    close: 'Band Karein',
-    profileTitle: 'Labour profile',
-    skillsTitle: 'Skills aur certifications',
-    preferencesTitle: 'Availability aur preferences',
-    reviewsTitle: 'Ratings aur reviews',
-    workHistoryTitle: 'Work history',
-    jobRequestsTitle: 'Labour ke liye posted jobs',
-    availableJobsTitle: 'Available jobs',
-    updateSkills: 'Skills Update',
-    editProfile: 'Profile Edit',
-    applicantsLabel: 'Applicants',
-    postedLabel: 'Posted',
-    distanceLabel: 'Distance',
-    hireNow: 'Abhi Hire Karein',
-    applyNow: 'Abhi Apply Karein',
-    applied: 'Apply Ho Gaya',
-    ratingLabel: 'Rating',
-    save: 'Save Karein',
-    cancel: 'Cancel Karein',
-    namePlaceholder: 'Apna naam likhiye',
-    titlePlaceholder: 'Apna job title likhiye',
-    locationPlaceholder: 'Apna location likhiye',
-    phonePlaceholder: 'Apna phone number likhiye',
-    profileUpdatedTitle: 'Profile Update Ho Gaya',
-    profileUpdatedMessage: 'Aapka profile successfully update ho gaya hai.',
-    apply: 'Apply Karein',
-    applyConfirmTitle: 'Job ke liye Apply Karein',
-    applyConfirmMessage: 'Kya aap "{job}" ke liye apply karna chahte hain?',
-    alreadyAppliedTitle: 'Pehle Hi Apply Ho Gaya',
-    alreadyAppliedMessage: 'Aap is job ke liye already apply kar chuke hain.',
-    applicationSuccessTitle: 'Application Submit Ho Gaya',
-    applicationSuccessMessage: 'Aapki application successfully submit ho gayi hai.',
-    applicationSubmitted: '{job} ke liye application submit ho gaya',
-    todayWorkButton: 'Aaj Ka Kaam',
-    todayWorkConfirmTitle: 'Aaj Ka Kaam Request Karein',
-    todayWorkConfirmMessage: 'Aapka job offer 15 minute me confirm ho jayega. Continue?',
-    confirm: 'Confirm Karein',
-    todayWorkSuccessTitle: 'Request Submit Ho Gaya',
-    todayWorkSuccessMessage: 'Aapka aaj ka kaam request submit ho gaya hai.',
-    todayWorkNotification: 'Aaj ka kaam request submit - 15 minute me confirmation',
-    notificationsTitle: 'Notifications',
-    notifyTitle: 'Notifications',
-    notifyCustomer: 'Jab labour reply kare, job accept ho, ya nearby labour available ho to alert paiye.',
-    notifyLabour: 'Jab nayi job aapki skill aur time se match kare to alert paiye.',
-    focusMuzaffarpur: 'Primary area: Muzaffarpur',
+    focusMuzaffarpur: 'Primary area: ',
     focusMuzaffarpurBody:
-      'Platform sabse pehle Muzaffarpur ke jobs aur labour ko highlight karta hai.',
-    messengerTitle: 'Chat aur messages',
-    messengerCustomer: 'Shortlist ya hire karne ke baad labour se seedha chat kijiye.',
-    messengerLabour: 'Matching job milne par customer se seedha baat kijiye.',
-    jobPostedTitle: 'Job post ho gayi',
-    jobPostedBody: 'Aapki job ab nearby labour ko dikh rahi hai.',
-    today: 'Aaj',
-    tomorrow: 'Kal',
-    specificDate: 'Specific Date',
+      'The platform highlights jobs and labour around first, with simple city-based filters.',
+  },
+  address: 'Address',
+  addressPlaceholder: 'Enter your address',
+  hi: {
+    address: 'पता',
+    addressPlaceholder: 'अपना पता लिखिए',
+    badge: 'लेबर हब',
+    headline: 'के लिए आसान और साफ़ भर्ती प्लेटफ़ॉर्म',
+    subheadline:
+      'कस्टमर और लेबर दोनों के लिए आसान लॉगिन, जॉब पोस्टिंग, मैचिंग, रेटिंग और चैट की सुविधा।',
+
+    login: 'लॉगिन',
+    signup: 'साइन अप',
+    customer: 'कस्टमर',
+    pendingRequests: 'लंबित अनुरोध',
+    labour: 'लेबर',
+
+    roleTitle: 'अकाउंट का प्रकार चुनें',
+    customerRoleBody: 'जॉब पोस्ट करें, कुशल लेबर खोजें और जल्दी हायर करें।',
+    labourRoleBody: 'अपना प्रोफाइल, स्किल और उपलब्धता मैनेज करें।',
+
+    welcomeBack: 'वापसी पर स्वागत है',
+    createAccount: 'अकाउंट बनाएं',
+
+    loginDescription: 'ज़रूरी जानकारी के साथ लॉगिन करें और सीधे डैशबोर्ड पर जाएं।',
+    signupDescription: 'जल्दी रजिस्टर करें और अपने रोल के अनुसार टूल्स का उपयोग करें।',
+
+    fullName: 'पूरा नाम',
+    fullNamePlaceholder: 'अपना पूरा नाम लिखें',
+    email: 'ईमेल',
+    emailPlaceholder: 'अपना ईमेल लिखें',
+    phone: 'मोबाइल नंबर',
+    phonePlaceholder: 'अपना मोबाइल नंबर लिखें',
+    password: 'पासवर्ड',
+    passwordPlaceholder: 'अपना पासवर्ड लिखें',
+
+    submitLogin: 'डैशबोर्ड खोलें',
+    submitSignup: 'अकाउंट बनाएं',
+
+    switchToLogin: 'पहले से अकाउंट है? लॉगिन करें',
+    switchToSignup: 'अकाउंट नहीं है? साइन अप करें',
+
+    demoButton: 'डेमो देखें',
+    back: 'वापस',
+
+    needWorkers: 'मुझे वर्कर चाहिए',
+    offerServices: 'मैं सेवा दे सकता हूँ',
+
+    customerRoleDescription:
+      'अपनी प्रोजेक्ट डिटेल पोस्ट करें और अपने क्षेत्र के वर्कर्स, इलेक्ट्रीशियन, प्लंबर से जुड़ें।',
+    labourRoleDescription:
+      'अपना मजबूत प्रोफाइल बनाएं, स्किल दिखाएं और कस्टमर से जुड़ें।',
+
+    startHiring: 'हायरिंग शुरू करें',
+    signUpWorker: 'वर्कर के रूप में साइन अप करें',
+
+    allCitiesAvailable: 'में उपलब्ध है',
+    footerBenefits:
+      'में अवसर • बेहतर वर्कर-एम्प्लॉयर मैचिंग • प्रोफेशनल पहली छाप',
+
+    envTitle: 'एक ही API कॉन्फ़िगरेशन',
+    envBody: '.env में EXPO_PUBLIC_API_URL सेट करें, सभी API कॉल्स आसान हो जाएंगी।',
+
+    missingTitle: 'जानकारी अधूरी है',
+    missingBody: 'आगे बढ़ने से पहले सभी ज़रूरी फ़ील्ड भरें।',
+
+    successTitle: 'सफल',
+    loginSuccess: 'लॉगिन सफल रहा।',
+    signupSuccess: 'साइन अप सफल रहा।',
+
+    errorTitle: 'रिक्वेस्ट असफल रही',
+    logout: 'लॉगआउट',
+
+    customerDashboardBadge: 'कस्टमर होम',
+    labourDashboardBadge: 'लेबर डैशबोर्ड',
+
+    hello: 'नमस्ते',
+
+    customerSubtitle:
+      'स्किल, क्षेत्र और उपलब्धता के अनुसार लेबर खोजें और आसानी से जॉब पोस्ट करें।',
+    labourSubtitle:
+      'अपनी स्किल अपडेट रखें और मैचिंग जॉब्स देखें।',
+
+    activeLabours: 'उपलब्ध लेबर',
+    liveJobs: 'चल रही जॉब्स',
+    avgRating: 'औसत रेटिंग',
+    hiresToday: 'आज हायर',
+    matchesToday: 'आज की मैचिंग जॉब्स',
+
+    profileViews: 'प्रोफाइल व्यू',
+    completedJobs: 'पूर्ण जॉब्स',
+    responseRate: 'रिस्पॉन्स रेट',
+
+    filtersTitle: 'फ़िल्टर',
+    searchPlaceholder: 'स्किल, नाम या क्षेत्र से खोजें',
+    district: 'शहर / क्षेत्र',
+    category: 'स्किल',
+    availability: 'उपलब्धता',
+    rating: 'रेटिंग',
+    clearFilters: 'फ़िल्टर हटाएं',
+
+    availableLaboursTitle: 'में उपलब्ध लेबर',
+    noLabours: 'इस फ़िल्टर में कोई लेबर नहीं मिला।',
+
+    popularSkillsTitle: 'लोकप्रिय स्किल्स',
+
+    postJobTitle: 'जॉब पोस्ट करें',
+    postJobOpen: 'जॉब पोस्ट करें',
+
+    jobTitle: 'जॉब शीर्षक',
+    jobTitlePlaceholder: '2 घंटे के लिए राज मिस्त्री चाहिए',
+
+    requiredSkill: 'आवश्यक स्किल',
+    dateTime: 'तारीख और समय',
+    dateTimePlaceholder: 'आज, 4:00 PM',
+
+    locationLabel: 'लोकेशन',
+    locationPlaceholder: 'मोतीझील, बेला, ...',
+
+    description: 'जॉब विवरण',
+    descriptionPlaceholder: 'काम का विवरण साफ़ लिखें',
+
+    skillLevel: 'स्किल स्तर',
+
+    postJobButton: 'जॉब प्रकाशित करें',
+    close: 'बंद करें',
+
+    profileTitle: 'लेबर प्रोफाइल',
+    skillsTitle: 'स्किल्स और सर्टिफिकेट',
+    preferencesTitle: 'उपलब्धता और प्राथमिकताएं',
+    reviewsTitle: 'रेटिंग और रिव्यू',
+    workHistoryTitle: 'कार्य इतिहास',
+
+    jobRequestsTitle: 'लेबर के लिए जॉब्स',
+    availableJobsTitle: 'उपलब्ध जॉब्स',
+
+    updateSkills: 'स्किल अपडेट करें',
+    editProfile: 'प्रोफाइल एडिट करें',
+
+    applicantsLabel: 'आवेदक',
+    postedLabel: 'पोस्ट किया गया',
+    distanceLabel: 'दूरी',
+
+    hireNow: 'अभी हायर करें',
+    applyNow: 'अभी आवेदन करें',
+    applied: 'आवेदन हो गया',
+
+    ratingLabel: 'रेटिंग',
+
+    save: 'सेव करें',
+    cancel: 'रद्द करें',
+
+    namePlaceholder: 'अपना नाम लिखें',
+    titlePlaceholder: 'अपना जॉब टाइटल लिखें',
+
+    profileUpdatedTitle: 'प्रोफाइल अपडेट हो गया',
+    profileUpdatedMessage: 'आपका प्रोफाइल सफलतापूर्वक अपडेट हो गया है।',
+
+    apply: 'आवेदन करें',
+
+    applyConfirmTitle: 'जॉब के लिए आवेदन करें',
+    applyConfirmMessage: 'क्या आप "{job}" के लिए आवेदन करना चाहते हैं?',
+
+    alreadyAppliedTitle: 'पहले ही आवेदन हो चुका है',
+    alreadyAppliedMessage: 'आप इस जॉब के लिए पहले ही आवेदन कर चुके हैं।',
+
+    applicationSuccessTitle: 'आवेदन सफल',
+    applicationSuccessMessage: 'आपका आवेदन सफलतापूर्वक जमा हो गया है।',
+
+    applicationSubmitted: '{job} के लिए आवेदन जमा हो गया',
+
+    todayWorkButton: 'आज का काम',
+    todayWorkConfirmTitle: 'आज का काम अनुरोध करें',
+    todayWorkConfirmMessage: 'आपका जॉब ऑफर 15 मिनट में कन्फर्म हो जाएगा। जारी रखें?',
+
+    confirm: 'कन्फर्म करें',
+
+    todayWorkSuccessTitle: 'अनुरोध सफल',
+    todayWorkSuccessMessage: 'आपका अनुरोध सफलतापूर्वक भेज दिया गया है।',
+
+    todayWorkNotification: 'आज का काम अनुरोध भेजा गया - 15 मिनट में कन्फर्मेशन',
+
+    notificationsTitle: 'नोटिफिकेशन',
+    notifyTitle: 'नोटिफिकेशन',
+
+    notifyCustomer:
+      'जब लेबर जवाब दे, जॉब स्वीकार करे या आसपास लेबर उपलब्ध हो तो सूचना पाएं।',
+    notifyLabour:
+      'जब नई जॉब आपकी स्किल से मेल खाए तो सूचना पाएं।',
+
+    focus: 'मुख्य क्षेत्र: ',
+    focusBody:
+      'प्लेटफ़ॉर्म पहले आसपास के जॉब्स और लेबर को दिखाता है।',
+
+    messengerTitle: 'चैट और संदेश',
+    messengerCustomer:
+      'हायर करने के बाद सीधे लेबर से चैट करें।',
+    messengerLabour:
+      'मैचिंग जॉब मिलने पर कस्टमर से सीधे बात करें।',
+
+    jobPostedTitle: 'जॉब पोस्ट हो गई',
+    jobPostedBody: 'आपकी जॉब अब आसपास के लेबर को दिखाई दे रही है।',
+
+    today: 'आज',
+    tomorrow: 'कल',
+    specificDate: 'विशिष्ट तारीख',
+
+    focusMuzaffarpur: 'मुख्य क्षेत्र: ',
+    focusMuzaffarpurBody:
+      'प्लेटफ़ॉर्म पहले आसपास के जॉब्स और लेबर को दिखाता है।',
   },
   bho: {
-    badge: 'Muzaffarpur Labor Hub',
-    headline: 'Muzaffarpur खातिर साफ अउर आसान काम-मजदूर प्लेटफॉर्म',
+    address: 'पता',
+    addressPlaceholder: 'अपना पता लिखीं',
+    badge: ' Labor Hub',
+    headline: ' खातिर साफ अउर आसान काम-मजदूर प्लेटफॉर्म',
     subheadline:
       'Customer आ labour दुनो खातिर neat login, job post, matching, rating आ chat-ready section.',
     login: 'Login',
@@ -311,14 +388,15 @@ export const copy = {
     switchToSignup: 'Account नइखे? Signup करीं',
     demoButton: 'Demo खोलीं',
     back: 'वापस',
+    pendingRequests: 'बाकी बांचल रिक्वेस्ट',
     needWorkers: 'मोहे मजदूर चाही',
     offerServices: 'हम सेवा दे सकिते बानी',
     customerRoleDescription: 'अपनो project details post करीं आ फटाफट अपने area के नए मजदूर, इलेक्ट्रीशियन, प्लंबर से जुड़ीं.',
     labourRoleDescription: 'अपनो काम का मजबूत profile बनाईं, अपनी skill दिखाईं आ customer के-ओ अपने से खोज करे दीं.',
     startHiring: 'Hiring शुरु करीं',
     signUpWorker: 'Worker के तउर पर signup करीं',
-    allCitiesAvailable: 'Muzaffarpur में उपलब्ध बा',
-    footerBenefits: 'Muzaffarpur में काम के मौका • अइसन worker-employer मिलान • Professional पहिली छाप',
+    allCitiesAvailable: ' में उपलब्ध बा',
+    footerBenefits: ' में काम के मौका • अइसन worker-employer मिलान • Professional पहिली छाप',
     envTitle: 'एगो API setting',
     envBody: '.env में EXPO_PUBLIC_API_URL सेट करीं, फेर सब API call साफ रही.',
     missingTitle: 'जानकारी अधूरा बा',
@@ -334,7 +412,7 @@ export const copy = {
     customerSubtitle:
       'Skill, area आ availability देख के labour खोजीं, फेर आसान तरीका से job post करीं.',
     labourSubtitle:
-      'Skill update राखीं, profile neat राखीं आ Muzaffarpur के matching job देखीं.',
+      'Skill update राखीं, profile neat राखीं आ  के matching job देखीं.',
     activeLabours: 'Available labour',
     liveJobs: 'Live jobs',
     avgRating: 'Avg rating',
@@ -350,7 +428,7 @@ export const copy = {
     availability: 'उपलब्धता',
     rating: 'Rating',
     clearFilters: 'Filter हटाईं',
-    availableLaboursTitle: 'Muzaffarpur में available labour',
+    availableLaboursTitle: ' में available labour',
     noLabours: 'एह filter पर कौनों labour ना मिलल.',
     popularSkillsTitle: 'Popular skills',
     postJobTitle: 'Job post करीं',
@@ -361,7 +439,7 @@ export const copy = {
     dateTime: 'Date अउर time',
     dateTimePlaceholder: 'आज, 4:00 PM',
     locationLabel: 'Location',
-    locationPlaceholder: 'Motijheel, Bela, Muzaffarpur...',
+    locationPlaceholder: 'Motijheel, Bela, ...',
     description: 'Job description',
     descriptionPlaceholder: 'काम के detail साफ-साफ लिखीं',
     skillLevel: 'Skill level',
@@ -387,8 +465,7 @@ export const copy = {
     cancel: 'Cancel करीं',
     namePlaceholder: 'अपना नाम लिखीं',
     titlePlaceholder: 'अपना job title लिखीं',
-    locationPlaceholder: 'अपना location लिखीं',
-    phonePlaceholder: 'अपना phone number लिखीं',
+
     profileUpdatedTitle: 'Profile Update हो गइल',
     profileUpdatedMessage: 'रउरा profile सफलतापूर्वक update हो गइल बा.',
     apply: 'Apply करीं',
@@ -410,9 +487,9 @@ export const copy = {
     notifyTitle: 'Notification',
     notifyCustomer: 'जब labour जवाब दे, job accept होखे, या nearby labour available होखे त alert मिली.',
     notifyLabour: 'जब नया job रउरा skill आ time से match करी त alert मिली.',
-    focusMuzaffarpur: 'मुख्य इलाका: Muzaffarpur',
-    focusMuzaffarpurBody:
-      'ई platform सबसे पहिले Muzaffarpur के labour आ job पर focus करेला.',
+    focus: 'मुख्य इलाका: ',
+    focusBody:
+      'ई platform सबसे पहिले  के labour आ job पर focus करेला.',
     messengerTitle: 'Chat आ message',
     messengerCustomer: 'Shortlist या hire कइला के बाद labour से सीधा बतिआईं.',
     messengerLabour: 'Matching job मिलते customer से सीधा बात करीं.',
@@ -421,5 +498,9 @@ export const copy = {
     today: 'आज',
     tomorrow: 'काल्ह',
     specificDate: 'Fix date',
+    focusMuzaffarpur: 'मुख्य क्षेत्र: ',
+    focusMuzaffarpurBody:
+      'यह प्लेटफ़ॉर्म पहले  के श्रमिकों और नौकरियों पर ध्यान केंद्रित करता है, जिसमें आसान शहर-आधारित फ़िल्टर होते हैं।',
+
   },
 };

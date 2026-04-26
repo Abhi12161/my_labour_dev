@@ -1,102 +1,148 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius } from '../theme/tokens';
-
-export function JobCard({ copy, job, actionLabel, onActionPress, disabled = false }) {
+export function JobCard({ job, actionLabel, onActionPress }) {
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{job.title}</Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{job.distance}</Text>
+    <View style={styles.wrapper}>
+      <View style={styles.card}>
+
+        {/* HEADER */}
+        <View style={styles.header}>
+          <Text style={styles.title} numberOfLines={2}>
+            {job.title}
+          </Text>
+
+          <View style={styles.distancePill}>
+            <Text style={styles.distanceText}>{job.distance}</Text>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.metaGroup}>
-        <Text style={styles.meta}>
-          {copy.locationLabel}: {job.location}
-        </Text>
-        {job.skill ? <Text style={styles.meta}>{copy.requiredSkill}: {job.skill}</Text> : null}
-        <Text style={styles.meta}>
-          {copy.applicantsLabel}: {job.applicants}
-        </Text>
-        <Text style={styles.meta}>
-          {copy.postedLabel}: {job.posted}
-        </Text>
-        {job.description ? <Text style={styles.meta}>{job.description}</Text> : null}
-      </View>
+        {/* LOCATION */}
+        <Text style={styles.location}>📍 {job.location}</Text>
 
-      {actionLabel ? (
-        <Pressable
-          style={[styles.actionButton, disabled && styles.disabledButton]}
-          onPress={onActionPress}
-          disabled={disabled}
-        >
-          <Text style={[styles.actionLabel, disabled && styles.disabledLabel]}>{actionLabel}</Text>
-        </Pressable>
-      ) : null}
+        {/* META ROW */}
+        <View style={styles.metaRow}>
+          <Text style={styles.meta}>🛠 {job.skill}</Text>
+          <Text style={styles.dot}>•</Text>
+          <Text style={styles.meta}>👥 {job.applicants}</Text>
+          <Text style={styles.dot}>•</Text>
+          <Text style={styles.meta}>⏱ {job.posted}</Text>
+        </View>
+
+        {/* DESCRIPTION */}
+        {job.description && (
+          <Text style={styles.desc} numberOfLines={2}>
+            {job.description}
+          </Text>
+        )}
+
+        {/* CTA */}
+        {/* <Pressable onPress={onActionPress}>
+          <LinearGradient
+            colors={['#1f7a63', '#166534']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.button}
+          >
+            <Text style={styles.buttonText}>{actionLabel}</Text>
+          </LinearGradient>
+        </Pressable> */}
+
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.panel,
-    borderRadius: radius.lg,
-    padding: 20,
-    gap: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    boxShadow: '0 10px 18px rgba(18, 35, 32, 0.08)',
+  wrapper: {
+    marginBottom: 12,
+    paddingHorizontal: 14,
   },
+
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
+    padding: 14,
+    gap: 10,
+
+    borderWidth: 1,
+    borderColor: '#eef2f1',
+
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
   },
+
   title: {
     flex: 1,
-    color: colors.text,
-    fontSize: 17,
-    fontWeight: '800',
-    lineHeight: 24,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
   },
-  badge: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.sm,
+
+  distancePill: {
+    backgroundColor: '#ecfdf5',
     paddingHorizontal: 10,
-    paddingVertical: 8,
-    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    borderRadius: 999,
   },
-  badgeText: {
-    color: colors.primary,
+
+  distanceText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#065f46',
+  },
+
+  location: {
     fontSize: 12,
-    fontWeight: '800',
+    color: '#6b7280',
   },
-  metaGroup: {
-    gap: 6,
+
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 4,
   },
+
   meta: {
-    color: colors.textMuted,
+    fontSize: 12,
+    color: '#4b5563',
+  },
+
+  dot: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+
+  desc: {
+    fontSize: 12,
+    color: '#374151',
+  },
+
+  button: {
+    marginTop: 6,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+
+    shadowColor: '#1f7a63',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+  },
+
+  buttonText: {
+    color: '#fff',
     fontSize: 13,
-  },
-  actionButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.primary,
-    borderRadius: radius.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-  },
-  disabledButton: {
-    backgroundColor: colors.panelMuted,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  actionLabel: {
-    color: colors.panel,
-    fontWeight: '800',
-  },
-  disabledLabel: {
-    color: colors.textMuted,
+    fontWeight: '700',
   },
 });

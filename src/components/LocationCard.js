@@ -1,25 +1,31 @@
 import { BlurView } from 'expo-blur';
-import * as Location from 'expo-location';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    Linking,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Animated,
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchLocation } from '../store/locationSlice';
 
 export function LocationCard({ text }) {
-  const [locationName, setLocationName] = useState('');
-  const [loadingLocation, setLoadingLocation] = useState(true);
-  const [longitude, setLongitude] = useState('');
-  const [latitude, setLatitude] = useState('');
+  const dispatch = useDispatch();
+
+  const { status, coords, name, error } = useSelector(
+    (state) => state.location
+  );
+
+  const latitude = coords?.latitude;
+  const longitude = coords?.longitude;
+
+  const locationName = error ? error : name;
+  const loadingLocation = status === 'loading';
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  // no global context — local state only
 
   useEffect(() => {
     Animated.loop(
@@ -36,57 +42,20 @@ export function LocationCard({ text }) {
         }),
       ])
     ).start();
-  }, [pulseAnim]);
+  }, []);
 
+  // ✅ location fetch
+  useEffect(() => {
+    dispatch(fetchLocation());
+  }, [dispatch]);
+
+  // ✅ dynamic map
   const openMap = () => {
     if (!latitude || !longitude) return;
+
     const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
     Linking.openURL(url);
   };
-
-  useEffect(() => {
-    const doGetLocation = async () => {
-      try {
-        setLoadingLocation(true);
-
-        let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setLocationName('Permission denied');
-          return;
-        }
-
-        let loc = await Location.getCurrentPositionAsync({});
-        setLatitude(loc.coords.latitude);
-        setLongitude(loc.coords.longitude);
-
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${loc.coords.latitude}&lon=${loc.coords.longitude}`
-        );
-
-        const data = await response.json();
-
-        // Prefer more granular city-like fields over the long display_name
-        const city =
-          data?.address?.city ||
-          data?.address?.town ||
-          data?.address?.village ||
-          data?.address?.state ||
-          null;
-
-        setLocationName(data.display_name || city || 'Unknown location');
-
-        // local-only: we keep the resolved name in component state
-
-      } catch (e) {
-        console.log(e);
-        setLocationName('Error fetching location');
-      } finally {
-        setLoadingLocation(false);
-      }
-    };
-
-    doGetLocation();
-  }, []);
 
   return (
     <BlurView intensity={70} tint="light" style={styles.glassCard}>
@@ -103,7 +72,9 @@ export function LocationCard({ text }) {
       </View>
 
       <View style={{ flex: 1 }}>
-        <Text style={styles.locationTitle}>{text?.liveLocation || 'Live Location'}</Text>
+        <Text style={styles.locationTitle}>
+          {text?.liveLocation || 'Live Location'}
+        </Text>
 
         {loadingLocation ? (
           <ActivityIndicator size="small" color="#4f46e5" />

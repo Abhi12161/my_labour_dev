@@ -9,8 +9,15 @@ import { copy } from '../constants/copy';
 import { useAuthFlow } from '../hooks/useAuthFlow';
 import { colors, radius } from '../theme/tokens';
 
-export function AuthScreen({ language, onAuthenticated, onChangeLanguage, preSelectedRole, onBack }) {
+export function AuthScreen({
+  language,
+  onAuthenticated,
+  onChangeLanguage,
+  preSelectedRole,
+  onBack,
+}) {
   const text = copy[language];
+
   const {
     authMode,
     loading,
@@ -30,178 +37,178 @@ export function AuthScreen({ language, onAuthenticated, onChangeLanguage, preSel
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      
+      {/* HERO */}
       <View style={styles.heroCard}>
-        <View style={styles.heroTopRow}>
+        <View style={styles.topRow}>
           {(onBack || preSelectedRole) && (
-            <Pressable onPress={onBack} style={styles.backButton}>
-              <Text style={styles.backText}>← {text.back || 'Back'}</Text>
+            <Pressable onPress={onBack} style={styles.backBtn}>
+              <Text style={styles.backText}>← {text.back}</Text>
             </Pressable>
           )}
-          <Text style={styles.badge}>{text.badge}</Text>
           <LanguageSwitcher selected={language} onChange={onChangeLanguage} />
         </View>
 
-        {!preSelectedRole && (
-          <>
-            <Text style={styles.headline}>{text.headline}</Text>
-            <Text style={styles.subheadline}>{text.subheadline}</Text>
-          </>
-        )}
-      </View>
-
-      <View style={styles.formCard}>
-        <Text style={styles.formTitle}>{isLogin ? text.welcomeBack : text.createAccount}</Text>
-        <Text style={styles.formDescription}>
-          {isLogin ? text.loginDescription : text.signupDescription}
+        <Text style={styles.title}>
+          {isLogin ? text.welcomeBack : text.createAccount}
         </Text>
 
-        {showRoleSelector && <RoleSelector copy={text} selectedRole={role} onChange={setRole} />}
+        <Text style={styles.subtitle}>
+          {isLogin ? text.loginDescription : text.signupDescription}
+        </Text>
+      </View>
 
-        {!isLogin ? (
-          <FormInput
-            label={text.fullName}
-            placeholder={text.fullNamePlaceholder}
-            value={signupForm.name}
-            onChangeText={(value) => updateSignupField('name', value)}
-          />
-        ) : null}
+      {/* FORM */}
+      <View style={styles.formCard}>
 
+        {showRoleSelector && (
+          <RoleSelector copy={text} selectedRole={role} onChange={setRole} />
+        )}
+
+        {/* Signup Fields */}
+        {!isLogin && (
+          <>
+            <FormInput
+              label={text.fullName}
+              placeholder={text.fullNamePlaceholder}
+              value={signupForm.name}
+              onChangeText={(v) => updateSignupField('name', v)}
+            />
+
+            <FormInput
+              label={text.address}
+              placeholder={text.addressPlaceholder}
+              value={signupForm.address}
+              onChangeText={(v) => updateSignupField('address', v)}
+              multiline
+            />
+          </>
+        )}
+
+        {/* Mobile */}
         <FormInput
-          label={text.email}
-          placeholder={text.emailPlaceholder}
-          value={isLogin ? loginForm.email : signupForm.email}
-          keyboardType="email-address"
-          onChangeText={(value) =>
-            isLogin ? updateLoginField('email', value) : updateSignupField('email', value)
+          label={text.phone}
+          placeholder={text.phonePlaceholder}
+          value={isLogin ? loginForm.phone : signupForm.phone}
+          keyboardType="phone-pad"
+          onChangeText={(v) =>
+            isLogin
+              ? updateLoginField('phone', v)
+              : updateSignupField('phone', v)
           }
         />
 
-        {!isLogin ? (
-          <FormInput
-            label={text.phone}
-            placeholder={text.phonePlaceholder}
-            value={signupForm.phone}
-            keyboardType="phone-pad"
-            onChangeText={(value) => updateSignupField('phone', value)}
-          />
-        ) : null}
-
-        <FormInput
-          label={text.password}
-          placeholder={text.passwordPlaceholder}
-          value={isLogin ? loginForm.password : signupForm.password}
-          secureTextEntry
-          onChangeText={(value) =>
-            isLogin ? updateLoginField('password', value) : updateSignupField('password', value)
-          }
-        />
-
+        {/* BUTTON */}
         <PrimaryButton
           label={isLogin ? text.submitLogin : text.submitSignup}
           loading={loading}
           onPress={submit}
         />
 
-        <PrimaryButton label={text.demoButton} variant="ghost" onPress={launchDemo} />
+        {/* DEMO */}
+        <PrimaryButton
+          label={text.demoButton}
+          variant="ghost"
+          onPress={launchDemo}
+        />
 
-        <Text style={styles.switchLink} onPress={switchMode}>
+        {/* SWITCH */}
+        <Text style={styles.switchText} onPress={switchMode}>
           {isLogin ? text.switchToSignup : text.switchToLogin}
         </Text>
 
+        {/* ENV BOX */}
         <View style={styles.envBox}>
           <Text style={styles.envTitle}>{text.envTitle}</Text>
           <Text style={styles.envBody}>{text.envBody}</Text>
           <Text style={styles.envCode}>{API_BASE_URL}</Text>
         </View>
+
       </View>
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    paddingBottom: 36,
+    paddingBottom: 40,
     gap: 20,
   },
+
   heroCard: {
     backgroundColor: colors.hero,
     borderRadius: radius.xl,
     padding: 24,
-    gap: 18,
-  },
-  heroTopRow: {
     gap: 12,
   },
-  backButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
+
+  backBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+
   backText: {
-    color: colors.panel,
-    fontSize: 14,
+    color: '#fff',
     fontWeight: '700',
-  },
-  badge: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.accent,
-    color: colors.panel,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  headline: {
-    color: colors.panel,
-    fontSize: 32,
-    lineHeight: 40,
-    fontWeight: '800',
-  },
-  subheadline: {
-    color: '#d9e6e0',
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  formCard: {
-    backgroundColor: colors.panel,
-    borderRadius: radius.xl,
-    padding: 22,
-    gap: 16,
-  },
-  formTitle: {
-    color: colors.text,
-    fontSize: 26,
-    fontWeight: '800',
-  },
-  formDescription: {
-    color: colors.textMuted,
     fontSize: 14,
-    lineHeight: 22,
-    marginBottom: 4,
   },
-  switchLink: {
-    color: colors.primary,
-    fontWeight: '700',
-    textAlign: 'center',
-    paddingTop: 4,
-  },
-  envBox: {
-    backgroundColor: colors.panelMuted,
-    borderRadius: radius.lg,
-    padding: 16,
-    gap: 6,
-  },
-  envTitle: {
-    color: colors.text,
+
+  title: {
+    color: '#fff',
+    fontSize: 28,
     fontWeight: '800',
   },
-  envBody: {
-    color: colors.textMuted,
+
+  subtitle: {
+    color: '#dfe6e3',
+    fontSize: 14,
     lineHeight: 20,
   },
+
+  formCard: {
+    backgroundColor: '#fff',
+    borderRadius: radius.xl,
+    padding: 20,
+    gap: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+
+  switchText: {
+    textAlign: 'center',
+    color: colors.primary,
+    fontWeight: '700',
+    marginTop: 6,
+  },
+
+  envBox: {
+    marginTop: 10,
+    padding: 14,
+    borderRadius: radius.lg,
+    backgroundColor: colors.panelMuted,
+    gap: 6,
+  },
+
+  envTitle: {
+    fontWeight: '700',
+    color: colors.text,
+  },
+
+  envBody: {
+    color: colors.textMuted,
+    fontSize: 13,
+  },
+
   envCode: {
     color: colors.primary,
-    fontWeight: '800',
+    fontWeight: '700',
   },
 });
