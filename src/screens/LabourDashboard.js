@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { LinearGradient } from 'expo-linear-gradient';
 import { InfoPanel } from '../components/InfoPanel';
 import { JobCard } from '../components/JobCard';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -41,14 +42,15 @@ export function LabourDashboard({
   const text = copy[language];
 
   // State for profile editing
+  const [profile, setProfile] = useState(labourProfile);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [editedProfile, setEditedProfile] = useState({
-    name: labourProfile.name,
-    title: labourProfile.title,
-    location: labourProfile.location,
-    phone: labourProfile.phone,
-  });
+  const [editedProfile, setEditedProfile] = useState(profile);
 
+  useEffect(() => {
+    if (isEditingProfile) {
+      setEditedProfile(profile);
+    }
+  }, [isEditingProfile]);
   // State for notifications
   const [notifications, setNotifications] = useState([]);
 
@@ -61,23 +63,18 @@ export function LabourDashboard({
   const handleSaveProfile = async () => {
     try {
       await saveProfileUpdate(editedProfile, session.user.id);
+
+      setProfile(editedProfile); // 🔥 UI update
+
       Alert.alert(text.profileUpdatedTitle, text.profileUpdatedMessage);
       setIsEditingProfile(false);
-    } catch (_error) {
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } catch {
+      Alert.alert('Error', 'Failed to update profile.');
     }
   };
 
-  /**
-   * Handle profile edit cancel
-   */
   const handleCancelEdit = () => {
-    setEditedProfile({
-      name: labourProfile.name,
-      title: labourProfile.title,
-      location: labourProfile.location,
-      phone: labourProfile.phone,
-    });
+    setEditedProfile(profile);
     setIsEditingProfile(false);
   };
 
@@ -160,33 +157,85 @@ export function LabourDashboard({
     );
   };
 
+  const gradients = [
+    ['#ff7e5f', '#feb47b'],   // orange
+    ['#43cea2', '#185a9d'],   // teal-blue
+    ['#667eea', '#764ba2'],   // purple
+    ['#f7971e', '#ffd200'],   // yellow
+    ['#00c6ff', '#0072ff'],   // 🔥 completed - blue pop
+    ['#f857a6', '#ff5858'],   // 🔥 pending - pink/red alert
+  ];
+
+
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       {/* Hero section with user greeting and logout */}
+
       <View style={styles.hero}>
+
+        {/* Top Row */}
         <View style={styles.heroTop}>
+
           <View style={styles.heroCopy}>
-            <Text style={styles.heroBadge}>{text.labourDashboardBadge}</Text>
+
+            {/* Badge */}
+            <View style={styles.badgeWrap}>
+              <Text style={styles.heroBadge}>
+                {text.customerDashboardBadge}
+              </Text>
+            </View>
+
+            {/* Greeting */}
             <Text style={styles.heroTitle}>
-              {text.hello}, {session.user.name}
+              {text.hello},{" "}
+              <Text style={styles.name}>{session.user.name}</Text>
             </Text>
-            <Text style={styles.heroSubtitle}>{text.labourSubtitle}</Text>
+
+            {/* Subtitle */}
+            <Text style={styles.heroSubtitle}>
+              {text.customerSubtitle}
+            </Text>
+
           </View>
-          <PrimaryButton label={text.logout} onPress={onLogout} variant="ghost" />
+
+          {/* Logout Button */}
+          <PrimaryButton
+            label={text.logout}
+            onPress={onLogout}
+            variant="ghost"
+          />
+
         </View>
 
-        {/* <LanguageSwitcher  selected={language} onChange={onChangeLanguage} /> */}
-
-        <View style={styles.profileBar}>
-          <Text style={styles.profileText}>{session.user.email}</Text>
-          <Text style={styles.profileText}>{session.user.phone}</Text>
+        {/* Profile Info Section */}
+        <View style={styles.profileCard}>
+          <Text style={styles.profileText}>
+            📧 {session.user.email}
+          </Text>
+          <Text style={styles.profileText}>
+            📱 {session.user.phone}
+          </Text>
         </View>
+
       </View>
+
 
       {/* Overview statistics grid */}
       <View style={styles.statsGrid}>
-        {labourOverviewStats.map((item) => (
-          <StatCard key={item.id} label={text[item.labelKey]} value={item.value} />
+        {labourOverviewStats.map((item, index) => (
+          <StatCard key={item.id}
+            label={text[item.labelKey]}
+            value={item.value}
+            icon={
+              item.id === 'completed'
+                ? 'checkmark-done'
+                : item.id === 'pending'
+                  ? 'time'
+                  : 'people'
+            }
+            trend={index % 2 === 0 ? 'up' : 'down'}
+            gradient={gradients[index % gradients.length]}
+            onPress={() => console.log('Clicked', item.labelKey)} />
         ))}
       </View>
 
@@ -217,79 +266,121 @@ export function LabourDashboard({
       )}
 
       {/* Profile section */}
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>{text.profileTitle}</Text>
-        <View style={styles.profileHeader}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{labourProfile.photoLabel}</Text>
+      <View style={styles.profileWrapper}>
+        <LinearGradient
+          colors={['rgba(0, 150, 136, 1)', 'rgba(32, 122, 99, 1)']}
+          style={styles.profilePanel}
+        >
+
+          <Text style={styles.profilePanelTitle}>
+            {text.profileTitle}
+          </Text>
+
+          <View style={styles.profileHeaderNew}>
+
+            {/* AVATAR */}
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.avatarNew}
+            >
+              <Text style={styles.avatarTextNew}>
+                {profile.name?.charAt(0)}
+              </Text>
+            </LinearGradient>
+
+            {/* PROFILE */}
+            <View style={styles.profileCopyNew}>
+              {isEditingProfile ? (
+                <>
+                  <TextInput
+                    style={styles.editInputNew}
+                    value={editedProfile.name}
+                    onChangeText={(v) =>
+                      setEditedProfile(p => ({ ...p, name: v }))
+                    }
+                    placeholder="Name"
+                  />
+                  <TextInput
+                    style={styles.editInputNew}
+                    value={editedProfile.title}
+                    onChangeText={(v) =>
+                      setEditedProfile(p => ({ ...p, title: v }))
+                    }
+                    placeholder="Title"
+                  />
+                  <TextInput
+                    style={styles.editInputNew}
+                    value={editedProfile.location}
+                    onChangeText={(v) =>
+                      setEditedProfile(p => ({ ...p, location: v }))
+                    }
+                    placeholder="Location"
+                  />
+                  <TextInput
+                    style={styles.editInputNew}
+                    value={editedProfile.phone}
+                    onChangeText={(v) =>
+                      setEditedProfile(p => ({ ...p, phone: v }))
+                    }
+                    placeholder="Phone"
+                  />
+                </>
+              ) : (
+                <>
+                  <Text style={styles.profileNameNew}>{profile.name}</Text>
+                  <Text style={styles.profileTitleTextNew}>{profile.title}</Text>
+                  <Text style={styles.profileMetaNew}>📍 {profile.location}</Text>
+                  <Text style={styles.profileMetaNew}>📞 {profile.phone}</Text>
+                  <Text style={styles.profileMetaNew}>
+                    ⭐ {profile.rating} ({profile.reviews})
+                  </Text>
+                </>
+              )}
+            </View>
           </View>
-          <View style={styles.profileCopy}>
+
+          {/* BUTTONS */}
+          <View style={styles.buttonRowNew}>
             {isEditingProfile ? (
               <>
-                <TextInput
-                  style={styles.editInput}
-                  value={editedProfile.name}
-                  onChangeText={(value) => setEditedProfile(prev => ({ ...prev, name: value }))}
-                  placeholder={text.namePlaceholder}
-                />
-                <TextInput
-                  style={styles.editInput}
-                  value={editedProfile.title}
-                  onChangeText={(value) => setEditedProfile(prev => ({ ...prev, title: value }))}
-                  placeholder={text.titlePlaceholder}
-                />
-                <TextInput
-                  style={styles.editInput}
-                  value={editedProfile.location}
-                  onChangeText={(value) => setEditedProfile(prev => ({ ...prev, location: value }))}
-                  placeholder={text.locationPlaceholder}
-                />
-                <TextInput
-                  style={styles.editInput}
-                  value={editedProfile.phone}
-                  onChangeText={(value) => setEditedProfile(prev => ({ ...prev, phone: value }))}
-                  placeholder={text.phonePlaceholder}
-                  keyboardType="phone-pad"
-                />
+                <PrimaryButton label="Save" onPress={handleSaveProfile} />
+                <PrimaryButton label="Cancel" onPress={handleCancelEdit} variant="ghost" />
               </>
             ) : (
               <>
-                <Text style={styles.profileName}>{labourProfile.name}</Text>
-                <Text style={styles.profileTitleText}>{labourProfile.title}</Text>
-                <Text style={styles.profileMeta}>{labourProfile.location}</Text>
-                <Text style={styles.profileMeta}>{labourProfile.phone}</Text>
-                <Text style={styles.profileMeta}>
-                  {text.ratingLabel}: {labourProfile.rating} ({labourProfile.reviews})
-                </Text>
+                <PrimaryButton label={text.updateSkills} onPress={() => { }} variant="ghost" />
+                <PrimaryButton label={text.editProfile} onPress={() => setIsEditingProfile(true)} variant="ghost" />
               </>
             )}
           </View>
-        </View>
-        <View style={styles.buttonRow}>
-          {isEditingProfile ? (
-            <>
-              <PrimaryButton label={text.save} onPress={handleSaveProfile} />
-              <PrimaryButton label={text.cancel} onPress={handleCancelEdit} variant="ghost" />
-            </>
-          ) : (
-            <>
-              <PrimaryButton label={text.updateSkills} onPress={() => {}} variant="ghost" />
-              <PrimaryButton label={text.editProfile} onPress={() => setIsEditingProfile(true)} variant="ghost" />
-            </>
-          )}
-        </View>
+
+        </LinearGradient>
       </View>
 
       {/* Skills and certifications section */}
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>{text.skillsTitle}</Text>
-        <View style={styles.skillRow}>
-          {[...labourProfile.skills, ...labourProfile.certifications].map((skill) => (
-            <View key={skill} style={styles.skillChip}>
-              <Text style={styles.skillText}>{skill}</Text>
-            </View>
-          ))}
-        </View>
+      <View style={styles.skillsWrapper}>
+        <LinearGradient
+          colors={['rgba(0, 150, 136, 1)', 'rgba(0, 150, 136, 1)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.skillsPanel}
+        >
+          <Text style={styles.skillsTitle}>{text.skillsTitle}</Text>
+
+          <View style={styles.skillsRowNew}>
+            {[...labourProfile.skills, ...labourProfile.certifications].map((skill) => (
+              <LinearGradient
+                key={skill}
+                colors={['#1f7a63', '#145a4a']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.skillChipNew}
+              >
+                <Text style={styles.skillTextNew}>{skill}</Text>
+              </LinearGradient>
+            ))}
+          </View>
+        </LinearGradient>
       </View>
 
       {/* Work preferences section */}
@@ -374,50 +465,72 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   hero: {
-    backgroundColor: colors.hero,
-    borderRadius: radius.xl,
-    padding: 24,
+    backgroundColor: '#0f2f2a', // deep premium green
+    borderRadius: 24,
+    padding: 22,
     gap: 18,
+
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 8 },
+
+    elevation: 6,
   },
+
   heroTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: 12,
   },
+
   heroCopy: {
     flex: 1,
-    gap: 12,
+    gap: 8,
   },
-  heroBadge: {
-    // alignSelf: 'flex-start',
-    backgroundColor: colors.accent,
-    color: colors.panel,
+
+  badgeWrap: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#ff9f1c',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderRadius: 999,
+  },
+
+  heroBadge: {
+    color: '#fff',
     fontSize: 12,
     fontWeight: '800',
-    maxWidth:135
   },
+
   heroTitle: {
-    color: colors.panel,
-    fontSize: 28,
-    lineHeight: 36,
+    color: '#fff',
+    fontSize: 26,
     fontWeight: '800',
+    lineHeight: 34,
   },
+
+  name: {
+    color: '#00e6a8', // highlight name
+  },
+
   heroSubtitle: {
-    color: '#d9e6e0',
-    fontSize: 15,
-    lineHeight: 24,
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 14,
+    lineHeight: 20,
   },
-  profileBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
+  profileCard: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    padding: 12,
+    borderRadius: 14,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
+
   profileText: {
-    color: '#d9e6e0',
+    color: 'rgba(255,255,255,0.85)',
     fontSize: 13,
   },
   statsGrid: {
@@ -434,60 +547,74 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     boxShadow: '0 10px 18px rgba(18, 35, 32, 0.08)',
   },
-  panelTitle: {
-    color: colors.text,
+  profileWrapper: {
+    marginTop: 12,
+  },
+
+  profilePanel: {
+    borderRadius: 20,
+    padding: 16,
+    gap: 14,
+
+    overflow: 'hidden',
+  },
+
+  profilePanelTitle: {
     fontSize: 16,
     fontWeight: '800',
   },
-  profileHeader: {
-    flexDirection: 'row',
-    gap: 16,
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: radius.lg,
-    backgroundColor: colors.panelMuted,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    color: colors.textMuted,
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  profileCopy: {
-    flex: 1,
-    gap: 4,
-  },
-  profileName: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  profileTitleText: {
-    color: colors.textMuted,
-    fontSize: 14,
-  },
-  profileMeta: {
-    color: colors.textMuted,
-    fontSize: 13,
-  },
-  buttonRow: {
+
+  profileHeaderNew: {
     flexDirection: 'row',
     gap: 12,
   },
-  editInput: {
+
+  avatarNew: {
+    width: 60,
+    height: 60,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  avatarTextNew: {
+    color: colors.primarySoft,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+
+  profileCopyNew: {
+    flex: 1,
+    gap: 4,
+  },
+
+  profileNameNew: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.primarySoft,
+  },
+
+  profileTitleTextNew: {
+    fontSize: 13,
+    color: colors.primarySoft,
+  },
+
+  profileMetaNew: {
+    fontSize: 12,
+    color: colors.primarySoft,
+  },
+
+  editInputNew: {
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: colors.panelMuted,
-    color: colors.text,
-    fontSize: 14,
-    marginBottom: 8,
+    borderColor: '#e5e7eb',
+    borderRadius: 10,
+    padding: 10,
+    backgroundColor: '#f9fafb',
+  },
+
+  buttonRowNew: {
+    flexDirection: 'row',
+    gap: 10,
   },
   todayWorkContainer: {
     alignItems: 'center',
@@ -577,5 +704,56 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 12,
     fontWeight: '700',
+  },
+  blurContainer: {
+    backgroundColor: 'rgba(249, 249, 249, 0.2)', // aapka glass effect
+    padding: 16,
+  },
+  skillsWrapper: {
+    marginTop: 12,
+  },
+
+  skillsPanel: {
+    borderRadius: 20,
+    padding: 16,
+    gap: 14,
+
+    // soft shadow
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+
+  skillsTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+  },
+
+  skillsRowNew: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+
+  skillChipNew: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+
+    // shadow for chip
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+
+  skillTextNew: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
   },
 });
