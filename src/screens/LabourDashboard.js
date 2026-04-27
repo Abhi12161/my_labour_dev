@@ -157,7 +157,7 @@ export function LabourDashboard({
           <View style={styles.heroTopActions}>
             <View style={styles.badgeWrap}>
               <Ionicons name="home" size={11} color="#ffffff" />
-              <Text style={styles.heroBadge}>{text.customerDashboardBadge}</Text>
+              <Text style={styles.heroBadge}>{text.labourDashboardBadge}</Text>
             </View>
 
             <Pressable style={styles.logoutPill} onPress={onLogout}>
