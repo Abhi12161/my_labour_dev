@@ -13,12 +13,13 @@ export function StatCard({
   trend = 'up',
   gradient = ['#667eea', '#764ba2'],
   onPress,
+  compact = false,
 }) {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
-    animatedValue.setValue(0); // ✅ reset animation
+    animatedValue.setValue(0);
 
     Animated.timing(animatedValue, {
       toValue: Number(value) || 0,
@@ -26,49 +27,49 @@ export function StatCard({
       useNativeDriver: false,
     }).start();
 
-    const listener = animatedValue.addListener(({ value }) => {
+    const listener = animatedValue.addListener(({ value: animated }) => {
       setDisplayValue(
-        Number.isInteger(Number(value))
-          ? Math.floor(value)
-          : Number(value).toFixed(1)
+        Number.isInteger(Number(animated))
+          ? Math.floor(animated)
+          : Number(animated).toFixed(1)
       );
     });
 
     return () => {
       animatedValue.removeListener(listener);
     };
-  }, [value]);
+  }, [animatedValue, value]);
 
   const isUp = trend === 'up';
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1, width: '31%' }]} // ✅ width yaha shift
+      style={({ pressed }) => [
+        {
+          opacity: pressed ? 0.9 : 1,
+          width: compact ? '23.5%' : '31%',
+        },
+      ]}
     >
-      <LinearGradient colors={gradient} style={styles.card}>
-        
-        {/* Glass effect */}
+      <LinearGradient colors={gradient} style={[styles.card, compact && styles.cardCompact]}>
         <BlurView intensity={25} tint="light" style={styles.blurOverlay} />
 
-        {/* Top row */}
         <View style={styles.topRow}>
-          <Ionicons name={icon} size={18} color="#fff" />
+          <Ionicons name={icon} size={compact ? 13 : 18} color="#fff" />
 
-          <View style={styles.trend}>
+          <View style={[styles.trend, compact && styles.trendCompact]}>
             <Ionicons
               name={isUp ? 'arrow-up' : 'arrow-down'}
-              size={12}
+              size={compact ? 8 : 12}
               color={isUp ? '#4ade80' : '#f87171'}
             />
           </View>
         </View>
 
-        {/* Value */}
-        <Text style={styles.value}>{displayValue}</Text>
+        <Text style={[styles.value, compact && styles.valueCompact]}>{displayValue}</Text>
 
-        {/* Label */}
-        <Text numberOfLines={1} style={styles.label}>
+        <Text numberOfLines={2} style={[styles.label, compact && styles.labelCompact]}>
           {label}
         </Text>
       </LinearGradient>
@@ -80,45 +81,58 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: radius.lg,
     padding: 12,
-    minHeight: 110, // ✅ IMPORTANT: label cut nahi hoga
+    minHeight: 110,
     overflow: 'hidden',
-
     elevation: 5,
     shadowColor: '#000',
     shadowOpacity: 0.25,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
   },
-
+  cardCompact: {
+    minHeight: 82,
+    borderRadius: 14,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+  },
   blurOverlay: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: radius.lg,
-    opacity: 0.25, // ✅ fade fix
+    opacity: 0.25,
   },
-
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-
   trend: {
     backgroundColor: 'rgba(255,255,255,0.2)',
     padding: 4,
     borderRadius: 999,
   },
-
+  trendCompact: {
+    padding: 3,
+  },
   value: {
     color: '#fff',
-    fontSize: 22, // thoda reduce → space bachega
+    fontSize: 22,
     fontWeight: '800',
     marginTop: 8,
   },
-
+  valueCompact: {
+    fontSize: 22,
+    marginTop: 6,
+    lineHeight: 24,
+  },
   label: {
     color: '#fff',
     opacity: 0.95,
     fontSize: 12,
+    marginTop: 2,
+  },
+  labelCompact: {
+    fontSize: 9.5,
+    lineHeight: 11,
     marginTop: 2,
   },
 });

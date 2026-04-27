@@ -127,14 +127,28 @@ export function LabourDashboard({
     ]);
   };
 
-  const gradients = [
-    ['#ff7e5f', '#feb47b'],
-    ['#43cea2', '#185a9d'],
-    ['#667eea', '#764ba2'],
-    ['#f7971e', '#ffd200'],
-    ['#00c6ff', '#0072ff'],
-    ['#f857a6', '#ff5858'],
-  ];
+  const statStyles = {
+    matches: {
+      icon: 'people',
+      gradient: ['#0f766e', '#115e59'],
+      trend: 'up',
+    },
+    views: {
+      icon: 'eye',
+      gradient: ['#1d9bf0', '#2563eb'],
+      trend: 'up',
+    },
+    completed: {
+      icon: 'briefcase',
+      gradient: ['#6d5efc', '#7c3aed'],
+      trend: 'up',
+    },
+    response: {
+      icon: 'bar-chart',
+      gradient: ['#f0a43a', '#f97316'],
+      trend: 'down',
+    },
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
@@ -163,21 +177,16 @@ export function LabourDashboard({
       </View>
 
       <View style={styles.statsGrid}>
-        {labourOverviewStats.map((item, index) => (
+        {labourOverviewStats.map((item) => (
           <StatCard
             key={item.id}
             label={text[item.labelKey]}
             value={item.value}
-            icon={
-              item.id === 'completed'
-                ? 'checkmark-done'
-                : item.id === 'pending'
-                  ? 'time'
-                  : 'people'
-            }
-            trend={index % 2 === 0 ? 'up' : 'down'}
-            gradient={gradients[index % gradients.length]}
+            icon={statStyles[item.id]?.icon}
+            trend={statStyles[item.id]?.trend}
+            gradient={statStyles[item.id]?.gradient}
             onPress={() => {}}
+            compact
           />
         ))}
       </View>
@@ -512,8 +521,9 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+    flexWrap: 'nowrap',
+    justifyContent: 'space-between',
+    gap: 6,
   },
   todayWorkCard: {
     flexDirection: 'row',
