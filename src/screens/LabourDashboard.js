@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { InfoPanel } from '../components/InfoPanel';
 import { JobCard } from '../components/JobCard';
@@ -17,57 +26,31 @@ import {
 import { saveJobApplication, saveProfileUpdate, saveTodayWorkRequest } from '../services/http';
 import { colors, radius } from '../theme/tokens';
 
-/**
- * LabourDashboard Component
- *
- * This component renders the dashboard for labour workers who want to find jobs.
- * It includes:
- * - Overview statistics
- * - Profile information
- * - Skills and certifications
- * - Work preferences
- * - Available jobs to apply for
- * - Reviews and ratings
- * - Work history
- * - Notifications and messaging
- */
 export function LabourDashboard({
   language,
-  onChangeLanguage,
   onLogout,
   postedJobs,
   session,
 }) {
-  // Get localized text based on selected language
   const text = copy[language];
-
-  // State for profile editing
   const [profile, setProfile] = useState(labourProfile);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editedProfile, setEditedProfile] = useState(profile);
+  const [notifications, setNotifications] = useState([]);
+  const [appliedJobs, setAppliedJobs] = useState([]);
 
   useEffect(() => {
     if (isEditingProfile) {
       setEditedProfile(profile);
     }
-  }, [isEditingProfile]);
-  // State for notifications
-  const [notifications, setNotifications] = useState([]);
+  }, [isEditingProfile, profile]);
 
-  // State for applied jobs
-  const [appliedJobs, setAppliedJobs] = useState([]);
-
-  /**
-   * Handle profile edit save
-   */
   const handleSaveProfile = async () => {
     try {
       await saveProfileUpdate(editedProfile, session.user.id);
-
-      setProfile(editedProfile); // 🔥 UI update
-
-      Alert.alert(text.profileUpdatedTitle, text.profileUpdatedMessage);
+      setProfile(editedProfile);
       setIsEditingProfile(false);
+      Alert.alert(text.profileUpdatedTitle, text.profileUpdatedMessage);
     } catch {
       Alert.alert('Error', 'Failed to update profile.');
     }
@@ -78,9 +61,6 @@ export function LabourDashboard({
     setIsEditingProfile(false);
   };
 
-  /**
-   * Handle job application
-   */
   const handleApplyForJob = (job) => {
     if (appliedJobs.includes(job.id)) {
       Alert.alert(text.alreadyAppliedTitle, text.alreadyAppliedMessage);
@@ -96,137 +76,96 @@ export function LabourDashboard({
           text: text.apply,
           onPress: async () => {
             try {
-              setAppliedJobs(prev => [...prev, job.id]);
+              setAppliedJobs((prev) => [...prev, job.id]);
 
-              // Add notification
-              const notification = {
-                id: Date.now(),
-                type: 'application',
-                message: text.applicationSubmitted.replace('{job}', job.title),
-                timestamp: new Date().toISOString(),
-              };
-              setNotifications(prev => [notification, ...prev]);
+              setNotifications((prev) => [
+                {
+                  id: Date.now(),
+                  type: 'application',
+                  message: text.applicationSubmitted.replace('{job}', job.title),
+                  timestamp: new Date().toISOString(),
+                },
+                ...prev,
+              ]);
 
-              // Save to admin database
               await saveJobApplication(job, session.user);
-
               Alert.alert(text.applicationSuccessTitle, text.applicationSuccessMessage);
-            } catch (_error) {
-              // Remove from applied jobs if API call failed
-              setAppliedJobs(prev => prev.filter(id => id !== job.id));
+            } catch {
+              setAppliedJobs((prev) => prev.filter((id) => id !== job.id));
               Alert.alert('Error', 'Failed to submit application. Please try again.');
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
 
-  /**
-   * Handle "Today Work" button press
-   */
   const handleTodayWork = async () => {
-    Alert.alert(
-      text.todayWorkConfirmTitle,
-      text.todayWorkConfirmMessage,
-      [
-        { text: text.cancel, style: 'cancel' },
-        {
-          text: text.confirm,
-          onPress: async () => {
-            try {
-              // Add notification
-              const notification = {
+    Alert.alert(text.todayWorkConfirmTitle, text.todayWorkConfirmMessage, [
+      { text: text.cancel, style: 'cancel' },
+      {
+        text: text.confirm,
+        onPress: async () => {
+          try {
+            setNotifications((prev) => [
+              {
                 id: Date.now(),
                 type: 'today_work',
                 message: text.todayWorkNotification,
                 timestamp: new Date().toISOString(),
-              };
-              setNotifications(prev => [notification, ...prev]);
+              },
+              ...prev,
+            ]);
 
-              // Save to admin database
-              await saveTodayWorkRequest(session.user);
-
-              Alert.alert(text.todayWorkSuccessTitle, text.todayWorkSuccessMessage);
-            } catch (_error) {
-              Alert.alert('Error', 'Failed to submit today work request. Please try again.');
-            }
+            await saveTodayWorkRequest(session.user);
+            Alert.alert(text.todayWorkSuccessTitle, text.todayWorkSuccessMessage);
+          } catch {
+            Alert.alert('Error', 'Failed to submit today work request. Please try again.');
           }
-        }
-      ]
-    );
+        },
+      },
+    ]);
   };
 
   const gradients = [
-    ['#ff7e5f', '#feb47b'],   // orange
-    ['#43cea2', '#185a9d'],   // teal-blue
-    ['#667eea', '#764ba2'],   // purple
-    ['#f7971e', '#ffd200'],   // yellow
-    ['#00c6ff', '#0072ff'],   // 🔥 completed - blue pop
-    ['#f857a6', '#ff5858'],   // 🔥 pending - pink/red alert
+    ['#ff7e5f', '#feb47b'],
+    ['#43cea2', '#185a9d'],
+    ['#667eea', '#764ba2'],
+    ['#f7971e', '#ffd200'],
+    ['#00c6ff', '#0072ff'],
+    ['#f857a6', '#ff5858'],
   ];
-
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Hero section with user greeting and logout */}
-
       <View style={styles.hero}>
-
-        {/* Top Row */}
         <View style={styles.heroTop}>
-
           <View style={styles.heroCopy}>
-
-            {/* Badge */}
             <View style={styles.badgeWrap}>
-              <Text style={styles.heroBadge}>
-                {text.customerDashboardBadge}
-              </Text>
+              <Text style={styles.heroBadge}>{text.labourDashboardBadge}</Text>
             </View>
 
-            {/* Greeting */}
-            <Text style={styles.heroTitle} numberOfLines={2}>
-              {text.hello},{" "}
-              <Text style={styles.name}>
-                {session?.user?.name || "User"}
-              </Text>
+            <Text style={styles.heroTitle}>
+              {text.hello},{' '}
+              <Text style={styles.heroName}>{session?.user?.name || 'User'}</Text>
             </Text>
 
-            {/* Subtitle */}
-            <Text style={styles.heroSubtitle} numberOfLines={2}>
-              {text.customerSubtitle}
-            </Text>
-
+            <Text style={styles.heroSubtitle}>{text.labourSubtitle}</Text>
           </View>
 
-          {/* Logout Button */}
-          <PrimaryButton
-            label={text.logout}
-            onPress={onLogout}
-            variant="ghost"
-            style={{ paddingHorizontal: 12 }}
-          />
-
+          <PrimaryButton label={text.logout} onPress={onLogout} variant="ghost" />
         </View>
 
-        {/* Profile Info Section */}
-        <View style={styles.profileCard}>
-          <Text style={styles.profileText} numberOfLines={1}>
-            📧 {session?.user?.email}
-          </Text>
-          <Text style={styles.profileText} numberOfLines={1}>
-            📱 {session?.user?.phone}
-          </Text>
+        <View style={styles.contactCard}>
+          <Text style={styles.contactText}>{session?.user?.email}</Text>
+          <Text style={styles.contactText}>{session?.user?.phone}</Text>
         </View>
-
       </View>
 
-
-      {/* Overview statistics grid */}
       <View style={styles.statsGrid}>
         {labourOverviewStats.map((item, index) => (
-          <StatCard key={item.id}
+          <StatCard
+            key={item.id}
             label={text[item.labelKey]}
             value={item.value}
             icon={
@@ -238,41 +177,28 @@ export function LabourDashboard({
             }
             trend={index % 2 === 0 ? 'up' : 'down'}
             gradient={gradients[index % gradients.length]}
-            onPress={() => console.log('Clicked', item.labelKey)} />
+            onPress={() => {}}
+          />
         ))}
       </View>
 
-      {/* Today Work Button */}
       <View style={styles.todayWorkCard}>
-
-        {/* Left Side (Icon + Text) */}
         <View style={styles.todayLeft}>
-
-          {/* Worker Icon */}
           <View style={styles.iconWrap}>
             <Text style={styles.icon}>👷</Text>
           </View>
 
-          {/* Text Content */}
           <View style={styles.textWrap}>
-            <Text style={styles.title}>Today Work</Text>
-            <Text style={styles.subtitle}>
+            <Text style={styles.todayTitle}>{text.todayWorkButton}</Text>
+            <Text style={styles.todaySubtitle}>
               View and manage all your work requests and bookings.
             </Text>
           </View>
-
         </View>
 
-        {/* Right Button */}
-        <PrimaryButton
-          label="View Today →"
-          onPress={handleTodayWork}
-          style={styles.todayBtn}
-        />
-
+        <PrimaryButton label="View Today" onPress={handleTodayWork} />
       </View>
 
-      {/* Notifications section */}
       {notifications.length > 0 && (
         <View style={styles.panel}>
           <Text style={styles.panelTitle}>{text.notificationsTitle}</Text>
@@ -289,174 +215,179 @@ export function LabourDashboard({
         </View>
       )}
 
-      {/* Profile section */}
-     <View style={styles.wrapper}>
-      <LinearGradient
-        colors={["#0d3b3b", "#14532d"]}
-        style={styles.card}
-      >
-
-        {/* Top Row */}
-        <View style={styles.topRow}>
-          <Text style={styles.title}>Labour profile</Text>
-
-          {!isEditingProfile && (
-            <PrimaryButton
-              label="✏️ Edit Profile"
-              variant="ghost"
-              onPress={() => setIsEditingProfile(true)}
-              style={styles.topEditBtn}
-            />
-          )}
-        </View>
-
-        {/* Profile Row */}
-        <View style={styles.row}>
-          {/* Avatar */}
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {profile.name?.charAt(0)}
-            </Text>
-          </View>
-
-          {/* Info */}
-          <View style={styles.info}>
-
-            {isEditingProfile ? (
-              <>
-                <TextInput
-                  style={styles.input}
-                  value={editedProfile.name}
-                  onChangeText={(v) =>
-                    setEditedProfile(p => ({ ...p, name: v }))
-                  }
-                  placeholder="Name"
-                  placeholderTextColor="#ccc"
-                />
-
-                <TextInput
-                  style={styles.input}
-                  value={editedProfile.title}
-                  onChangeText={(v) =>
-                    setEditedProfile(p => ({ ...p, title: v }))
-                  }
-                  placeholder="Work"
-                  placeholderTextColor="#ccc"
-                />
-
-                <TextInput
-                  style={styles.input}
-                  value={editedProfile.location}
-                  onChangeText={(v) =>
-                    setEditedProfile(p => ({ ...p, location: v }))
-                  }
-                  placeholder="Location"
-                  placeholderTextColor="#ccc"
-                />
-
-                <TextInput
-                  style={styles.input}
-                  value={editedProfile.phone}
-                  onChangeText={(v) =>
-                    setEditedProfile(p => ({ ...p, phone: v }))
-                  }
-                  placeholder="Phone"
-                  placeholderTextColor="#ccc"
-                />
-              </>
-            ) : (
-              <>
-                <Text style={styles.name}>{profile.name}</Text>
-                <Text style={styles.work}>{profile.title}</Text>
-
-                <Text style={styles.meta}>
-                  📍 {profile.location}   📞 {profile.phone}
-                </Text>
-
-                <Text style={styles.rating}>
-                  ⭐ {profile.rating} ({profile.reviews})
-                </Text>
-              </>
-            )}
-
-          </View>
-        </View>
-
-        {/* Bottom Buttons */}
-        <View style={styles.bottomRow}>
-          {isEditingProfile ? (
+      <View style={styles.profileSectionWrap}>
+        <LinearGradient colors={['#0e5a49', '#11463d']} style={styles.profileCard}>
+          {!isEditingProfile ? (
             <>
-              <PrimaryButton
-                label="💾 Save"
-                onPress={handleSaveProfile}
-                style={styles.smallBtn}
-              />
-              <PrimaryButton
-                label="❌ Cancel"
-                variant="ghost"
-                onPress={handleCancelEdit}
-                style={styles.smallBtn}
-              />
+              <View style={styles.profileHeaderRow}>
+                <View style={styles.profileHeaderBadge}>
+                  <Ionicons name="chatbubble-ellipses-outline" size={12} color="#ffffff" />
+                  <Text style={styles.profileHeaderBadgeText}>Labour profile</Text>
+                </View>
+
+                <Pressable style={styles.profileHeaderEditPill} onPress={() => setIsEditingProfile(true)}>
+                  <Ionicons name="create-outline" size={10} color="#ffffff" />
+                  <Text style={styles.profileHeaderEditPillText}>Edit Profile</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.profileContentRow}>
+                <View style={styles.avatarCircle}>
+                  <Text style={styles.avatarLetter}>{profile.name?.charAt(0) || 'A'}</Text>
+                </View>
+
+                <View style={styles.profileInfoBlock}>
+                  <Text style={styles.profileName}>{profile.name}</Text>
+                  <Text style={styles.profileWork}>{profile.title}</Text>
+
+                  <View style={styles.profileMetaRow}>
+                    <View style={styles.profileMetaItem}>
+                      <Ionicons name="location" size={10} color="#ff8d63" />
+                      <Text style={styles.profileMetaText}>{profile.location}</Text>
+                    </View>
+
+                    <View style={styles.profileMetaItem}>
+                      <Ionicons name="call" size={10} color="#ffffff" />
+                      <Text style={styles.profileMetaText}>{profile.phone}</Text>
+                    </View>
+
+                    <View style={styles.profileMetaItem}>
+                      <Ionicons name="star" size={10} color="#f7c948" />
+                      <Text style={styles.profileMetaText}>
+                        {profile.rating} ({profile.reviews})
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.profileActionRow}>
+                <Pressable style={styles.profileActionLight}>
+                  <Ionicons name="briefcase-outline" size={13} color="#0e5a49" />
+                  <Text style={styles.profileActionLightText}>{text.updateSkills}</Text>
+                </Pressable>
+
+                <Pressable style={styles.profileActionDark} onPress={() => setIsEditingProfile(true)}>
+                  <Ionicons name="create-outline" size={13} color="#ffffff" />
+                  <Text style={styles.profileActionDarkText}>{text.editProfile}</Text>
+                </Pressable>
+              </View>
             </>
           ) : (
             <>
-              <PrimaryButton
-                label="⬆️ Update Skills"
-                variant="ghost"
-                style={styles.smallBtn}
-              />
-              <PrimaryButton
-                label="✏️ Edit Profile"
-                variant="ghost"
-                onPress={() => setIsEditingProfile(true)}
-                style={styles.smallBtn}
-              />
+              <View style={styles.profileHeaderRow}>
+                <View style={styles.profileHeaderBadge}>
+                  <Ionicons name="create-outline" size={12} color="#ffffff" />
+                  <Text style={styles.profileHeaderBadgeText}>Edit Profile</Text>
+                </View>
+
+                <Pressable style={styles.profileHeaderEditPill} onPress={handleCancelEdit}>
+                  <Text style={styles.profileHeaderEditPillText}>Close</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.editForm}>
+                <TextInput
+                  style={styles.editInput}
+                  value={editedProfile.name}
+                  onChangeText={(value) => setEditedProfile((prev) => ({ ...prev, name: value }))}
+                  placeholder="Name"
+                  placeholderTextColor="#b8d1cb"
+                />
+                <TextInput
+                  style={styles.editInput}
+                  value={editedProfile.title}
+                  onChangeText={(value) => setEditedProfile((prev) => ({ ...prev, title: value }))}
+                  placeholder="Work"
+                  placeholderTextColor="#b8d1cb"
+                />
+                <TextInput
+                  style={styles.editInput}
+                  value={editedProfile.location}
+                  onChangeText={(value) => setEditedProfile((prev) => ({ ...prev, location: value }))}
+                  placeholder="Location"
+                  placeholderTextColor="#b8d1cb"
+                />
+                <TextInput
+                  style={styles.editInput}
+                  value={editedProfile.phone}
+                  onChangeText={(value) => setEditedProfile((prev) => ({ ...prev, phone: value }))}
+                  placeholder="Phone"
+                  placeholderTextColor="#b8d1cb"
+                />
+              </View>
+
+              <View style={styles.profileActionRow}>
+                <Pressable style={styles.profileActionLight} onPress={handleSaveProfile}>
+                  <Ionicons name="save-outline" size={13} color="#0e5a49" />
+                  <Text style={styles.profileActionLightText}>{text.save}</Text>
+                </Pressable>
+
+                <Pressable style={styles.profileActionDark} onPress={handleCancelEdit}>
+                  <Ionicons name="close-outline" size={13} color="#ffffff" />
+                  <Text style={styles.profileActionDarkText}>{text.cancel}</Text>
+                </Pressable>
+              </View>
             </>
           )}
-        </View>
-
-      </LinearGradient>
-    </View>
-
-      {/* Skills and certifications section */}
-      <View style={styles.skillsWrapper}>
-        <LinearGradient
-          colors={['rgba(0, 150, 136, 1)', 'rgba(0, 150, 136, 1)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.skillsPanel}
-        >
-          <Text style={styles.skillsTitle}>{text.skillsTitle}</Text>
-
-          <View style={styles.skillsRowNew}>
-            {[...labourProfile.skills, ...labourProfile.certifications].map((skill) => (
-              <LinearGradient
-                key={skill}
-                colors={['#1f7a63', '#145a4a']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.skillChipNew}
-              >
-                <Text style={styles.skillTextNew}>{skill}</Text>
-              </LinearGradient>
-            ))}
-          </View>
         </LinearGradient>
       </View>
 
-      {/* Work preferences section */}
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>{text.preferencesTitle}</Text>
-        <View style={styles.preferenceList}>
-          {labourProfile.preferences.map((item) => (
-            <Text key={item} style={styles.preferenceItem}>
-              - {item}
-            </Text>
+      <View style={styles.detailCard}>
+        <View style={styles.detailCardHeader}>
+          <View style={styles.detailCardTitleWrap}>
+            <Ionicons name="medal-outline" size={13} color="#0c5a49" />
+            <Text style={styles.detailCardTitle}>{text.skillsTitle}</Text>
+          </View>
+
+          <Pressable style={styles.detailCardLink}>
+            <Text style={styles.detailCardLinkText}>View all</Text>
+            <Ionicons name="arrow-forward" size={11} color="#6b7c74" />
+          </Pressable>
+        </View>
+
+        <View style={styles.detailChipRow}>
+          {[...labourProfile.skills, ...labourProfile.certifications].map((skill, index) => (
+            <View key={skill} style={styles.detailChip}>
+              <Ionicons
+                name={index % 2 === 0 ? 'hammer-outline' : 'briefcase-outline'}
+                size={12}
+                color="#0c5a49"
+              />
+              <Text style={styles.detailChipText}>{skill}</Text>
+            </View>
           ))}
         </View>
       </View>
 
-      {/* Available jobs section */}
+      <View style={styles.detailCard}>
+        <View style={styles.detailCardHeader}>
+          <View style={styles.detailCardTitleWrap}>
+            <Ionicons name="calendar-outline" size={13} color="#0c5a49" />
+            <Text style={styles.detailCardTitle}>{text.preferencesTitle}</Text>
+          </View>
+        </View>
+
+        <View style={styles.preferenceMetaRow}>
+          {labourProfile.preferences.map((item, index) => (
+            <View key={item} style={styles.preferenceMetaItem}>
+              <Ionicons
+                name={
+                  index === 0
+                    ? 'sparkles-outline'
+                    : index === 1
+                      ? 'moon-outline'
+                      : 'location-outline'
+                }
+                size={12}
+                color="#0c5a49"
+              />
+              <Text style={styles.preferenceMetaText}>{item}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
       <View style={styles.panel}>
         <Text style={styles.panelTitle}>{text.availableJobsTitle}</Text>
         <View style={styles.jobsList}>
@@ -473,7 +404,6 @@ export function LabourDashboard({
         </View>
       </View>
 
-      {/* Reviews section */}
       <View style={styles.panel}>
         <Text style={styles.panelTitle}>{text.reviewsTitle}</Text>
         <View style={styles.preferenceList}>
@@ -486,7 +416,6 @@ export function LabourDashboard({
         </View>
       </View>
 
-      {/* Work history section */}
       <View style={styles.panel}>
         <Text style={styles.panelTitle}>{text.workHistoryTitle}</Text>
         <View style={styles.preferenceList}>
@@ -498,10 +427,8 @@ export function LabourDashboard({
         </View>
       </View>
 
-      {/* Notifications info panel */}
       <InfoPanel title={text.notifyTitle} body={text.notifyLabour} />
 
-      {/* Messages section */}
       <View style={styles.panel}>
         <Text style={styles.panelTitle}>{text.messengerTitle}</Text>
         <View style={styles.messageList}>
@@ -518,7 +445,6 @@ export function LabourDashboard({
   );
 }
 
-// Styles for the LabourDashboard component
 const styles = StyleSheet.create({
   container: {
     padding: 20,
@@ -526,72 +452,107 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   hero: {
-    padding: 16,
-    borderRadius: 20,
-    backgroundColor: "#0f3d3e",
+    backgroundColor: '#0f2f2a',
+    borderRadius: 24,
+    padding: 22,
+    gap: 18,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
-
   heroTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
   },
-
   heroCopy: {
     flex: 1,
-    paddingRight: 10, // 🔥 important for text spacing
+    gap: 8,
   },
-
   badgeWrap: {
-    backgroundColor: "#f59e0b",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    alignSelf: "flex-start",
-    marginBottom: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: '#ff9f1c',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
   },
-
   heroBadge: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: '800',
   },
-
   heroTitle: {
-    fontSize: 18,
-    color: "#fff",
-    fontWeight: "600",
-    flexWrap: "wrap", // 🔥 fix text cutting
+    color: '#fff',
+    fontSize: 26,
+    fontWeight: '800',
+    lineHeight: 34,
   },
-
-  name: {
-    color: "#22c55e",
-    fontWeight: "700",
+  heroName: {
+    color: '#00e6a8',
   },
-
   heroSubtitle: {
-    fontSize: 13,
-    color: "#d1d5db",
-    marginTop: 4,
-    flexWrap: "wrap",
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 14,
+    lineHeight: 20,
   },
-
-  profileCard: {
-    marginTop: 12,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    padding: 10,
-    borderRadius: 12,
+  contactCard: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    padding: 12,
+    borderRadius: 14,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-
-  profileText: {
-    color: "#fff",
+  contactText: {
+    color: 'rgba(255,255,255,0.85)',
     fontSize: 13,
-    marginBottom: 4,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+  },
+  todayWorkCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#e6f4f1',
+    padding: 14,
+    borderRadius: 16,
+    gap: 12,
+  },
+  todayLeft: {
+    flexDirection: 'row',
+    flex: 1,
+    alignItems: 'center',
+  },
+  iconWrap: {
+    width: 45,
+    height: 45,
+    borderRadius: 10,
+    backgroundColor: '#cdebe4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  icon: {
+    fontSize: 22,
+  },
+  textWrap: {
+    flex: 1,
+  },
+  todayTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f3d3e',
+  },
+  todaySubtitle: {
+    fontSize: 12,
+    color: '#4b5563',
+    marginTop: 2,
   },
   panel: {
     backgroundColor: colors.panel,
@@ -600,80 +561,11 @@ const styles = StyleSheet.create({
     gap: 16,
     borderWidth: 1,
     borderColor: colors.border,
-    boxShadow: '0 10px 18px rgba(18, 35, 32, 0.08)',
   },
-  profileWrapper: {
-    marginTop: 12,
-  },
-
-  profilePanel: {
-    borderRadius: 20,
-    padding: 16,
-    gap: 14,
-
-    overflow: 'hidden',
-  },
-
-  profilePanelTitle: {
+  panelTitle: {
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
-  },
-
-  profileHeaderNew: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-
-  avatarNew: {
-    width: 60,
-    height: 60,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  avatarTextNew: {
-    color: colors.primarySoft,
-    fontSize: 18,
-    fontWeight: '800',
-  },
-
-  profileCopyNew: {
-    flex: 1,
-    gap: 4,
-  },
-
-  profileNameNew: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: colors.primarySoft,
-  },
-
-  profileTitleTextNew: {
-    fontSize: 13,
-    color: colors.primarySoft,
-  },
-
-  profileMetaNew: {
-    fontSize: 12,
-    color: colors.primarySoft,
-  },
-
-  editInputNew: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    padding: 10,
-    backgroundColor: '#f9fafb',
-  },
-
-  buttonRowNew: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  todayWorkContainer: {
-    alignItems: 'center',
-    marginVertical: 8,
   },
   notificationList: {
     gap: 8,
@@ -693,21 +585,223 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 12,
   },
-  skillRow: {
+  profileSectionWrap: {
+    marginTop: 4,
+  },
+  profileCard: {
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  profileHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+  },
+  profileHeaderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  profileHeaderBadgeText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  profileHeaderEditPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.45)',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  profileHeaderEditPillText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: '600',
+  },
+  profileContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  avatarCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#8db79a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarLetter: {
+    color: '#ffffff',
+    fontSize: 28,
+    fontWeight: '700',
+  },
+  profileInfoBlock: {
+    flex: 1,
+    gap: 2,
+  },
+  profileName: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  profileWork: {
+    color: '#e8f4ef',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  profileMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 4,
+  },
+  profileMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  profileMetaText: {
+    color: '#ffffff',
+    fontSize: 9.5,
+    fontWeight: '600',
+  },
+  profileActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  profileActionLight: {
+    flex: 1,
+    minHeight: 34,
+    borderRadius: 6,
+    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  profileActionLightText: {
+    color: '#0e5a49',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  profileActionDark: {
+    flex: 1,
+    minHeight: 34,
+    borderRadius: 6,
+    backgroundColor: '#145c4d',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  profileActionDarkText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  editForm: {
+    gap: 8,
+  },
+  editInput: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    color: '#ffffff',
+    fontSize: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  detailCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#e6ece8',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  detailCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+  },
+  detailCardTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  detailCardTitle: {
+    color: '#273632',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  detailCardLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  detailCardLinkText: {
+    color: '#718278',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  detailChipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  skillChip: {
-    backgroundColor: colors.panelMuted,
-    borderRadius: radius.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  detailChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#edf5f1',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
   },
-  skillText: {
-    color: colors.textMuted,
-    fontSize: 13,
-    fontWeight: '700',
+  detailChipText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: '#325048',
+  },
+  preferenceMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  preferenceMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 5,
+    flex: 1,
+    minWidth: '30%',
+  },
+  preferenceMetaText: {
+    color: '#4f6760',
+    fontSize: 10,
+    fontWeight: '500',
+    lineHeight: 14,
+    flexShrink: 1,
   },
   preferenceList: {
     gap: 8,
@@ -759,332 +853,5 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 12,
     fontWeight: '700',
-  },
-  blurContainer: {
-    backgroundColor: 'rgba(249, 249, 249, 0.2)', // aapka glass effect
-    padding: 16,
-  },
-  skillsWrapper: {
-    marginTop: 12,
-  },
-
-  skillsPanel: {
-    borderRadius: 20,
-    padding: 16,
-    gap: 14,
-
-    // soft shadow
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-
-  skillsTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#111827',
-  },
-
-  skillsRowNew: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-
-  skillChipNew: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-
-    // shadow for chip
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-  },
-
-  skillTextNew: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  todayWorkCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#e6f4f1",
-    padding: 14,
-    borderRadius: 16,
-    marginTop: 16,
-  },
-
-  todayLeft: {
-    flexDirection: "row",
-    flex: 1,
-    alignItems: "center",
-    paddingRight: 10,
-  },
-
-  iconWrap: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: "#cdebe4",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-  },
-
-  icon: {
-    fontSize: 24,
-  },
-
-  textWrap: {
-    flex: 1,
-  },
-
-  title: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0f3d3e",
-  },
-
-  subtitle: {
-    fontSize: 12,
-    color: "#4b5563",
-    marginTop: 2,
-  },
-
-  todayBtn: {
-    paddingHorizontal: 14,
-    height: 36,
-    borderRadius: 20,
-  },
-
-  profileCard: {
-    borderRadius: 20,
-    padding: 16,
-  },
-
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-
-  profileTitle: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-
-  profileRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 50,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-
-  avatarText: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "700",
-  },
-
-  profileInfo: {
-    flex: 1,
-  },
-
-  name: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-
-  work: {
-    color: "#d1fae5",
-    fontSize: 13,
-  },
-
-  meta: {
-    color: "#e5e7eb",
-    fontSize: 12,
-    marginTop: 3,
-  },
-
-  rating: {
-    color: "#facc15",
-    fontSize: 12,
-    marginTop: 3,
-  },
-
-  input: {
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.3)",
-    borderRadius: 10,
-    padding: 8,
-    color: "#fff",
-    marginBottom: 6,
-  },
-
-  bottomRow: {
-    flexDirection: "row",
-    marginTop: 12,
-    gap: 10,
-  },
-
-  bottomBtn: {
-    flex: 1,
-  },
-
-  /* TODAY WORK */
-
-  todayWorkCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#e6f4f1",
-    padding: 14,
-    borderRadius: 16,
-    marginTop: 16,
-  },
-
-  todayLeft: {
-    flexDirection: "row",
-    flex: 1,
-    alignItems: "center",
-  },
-
-  iconWrap: {
-    width: 45,
-    height: 45,
-    borderRadius: 10,
-    backgroundColor: "#cdebe4",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-  },
-
-  todayTitle: {
-    fontWeight: "700",
-    fontSize: 14,
-  },
-
-  todaySubtitle: {
-    fontSize: 12,
-    color: "#555",
-  },
-
-  todayBtn: {
-    height: 36,
-    paddingHorizontal: 12,
-  },
-   wrapper: {
-    padding: 16,
-  },
-
-  card: {
-    borderRadius: 18,
-    padding: 14,
-  },
-
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-
-  title: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-
-  topEditBtn: {
-    height: 28,
-    paddingHorizontal: 10,
-  },
-
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 50,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-
-  avatarText: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "700",
-  },
-
-  info: {
-    flex: 1,
-  },
-
-  name: {
-    color: "#fff",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-
-  work: {
-    color: "#d1fae5",
-    fontSize: 12,
-    marginTop: 2,
-  },
-
-  meta: {
-    color: "#e5e7eb",
-    fontSize: 11,
-    marginTop: 2,
-  },
-
-  rating: {
-    color: "#facc15",
-    fontSize: 11,
-    marginTop: 2,
-  },
-
-  input: {
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.3)",
-    borderRadius: 10,
-    padding: 6,
-    color: "#fff",
-    marginBottom: 6,
-    fontSize: 12,
-  },
-
-  bottomRow: {
-    flexDirection: "row",
-    marginTop: 12,
-    gap: 10,
-  },
-
-  smallBtn: {
-    flex: 1,
-    height: 32,
-    borderRadius: 20,
   },
 });
