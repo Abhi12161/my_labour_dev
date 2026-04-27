@@ -3,7 +3,6 @@ import {
   Alert,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -24,7 +23,7 @@ import {
   labourWorkHistory,
 } from '../data/dashboardData';
 import { saveJobApplication, saveProfileUpdate, saveTodayWorkRequest } from '../services/http';
-import { colors, radius } from '../theme/tokens';
+import { styles } from './LabourDashboard.styles';
 
 const skillEditorCopy = {
   en: {
@@ -341,19 +340,35 @@ export function LabourDashboard({
           </View>
         </View>
 
-        <PrimaryButton label="View Today" onPress={handleTodayWork} />
+        <PrimaryButton label="Apply for Job" onPress={handleTodayWork} />
       </View>
 
       {notifications.length > 0 && (
-        <View style={styles.panel}>
-          <Text style={styles.panelTitle}>{text.notificationsTitle}</Text>
+        <View style={styles.detailCard}>
+          <View style={styles.detailCardHeader}>
+            <View style={styles.detailCardTitleWrap}>
+              <Ionicons name="notifications-outline" size={13} color="#0c5a49" />
+              <Text style={styles.detailCardTitle}>{text.notificationsTitle}</Text>
+            </View>
+          </View>
+
           <View style={styles.notificationList}>
             {notifications.slice(0, 3).map((notification) => (
-              <View key={notification.id} style={styles.notificationItem}>
+              <View key={notification.id} style={styles.notificationCard}>
+                <View style={styles.notificationTopRow}>
+                  <View style={styles.notificationIconWrap}>
+                    <Ionicons
+                      name={notification.type === 'today_work' ? 'flash-outline' : 'document-text-outline'}
+                      size={12}
+                      color="#0c5a49"
+                    />
+                  </View>
+                  <Text style={styles.notificationTime}>
+                    {new Date(notification.timestamp).toLocaleTimeString()}
+                  </Text>
+                </View>
+
                 <Text style={styles.notificationText}>{notification.message}</Text>
-                <Text style={styles.notificationTime}>
-                  {new Date(notification.timestamp).toLocaleTimeString()}
-                </Text>
               </View>
             ))}
           </View>
@@ -620,25 +635,63 @@ export function LabourDashboard({
         </View>
       </View>
 
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>{text.reviewsTitle}</Text>
-        <View style={styles.preferenceList}>
+      <View style={styles.detailCard}>
+        <View style={styles.detailCardHeader}>
+          <View style={styles.detailCardTitleWrap}>
+            <Ionicons name="star-outline" size={13} color="#0c5a49" />
+            <Text style={styles.detailCardTitle}>{text.reviewsTitle}</Text>
+          </View>
+        </View>
+
+        <View style={styles.reviewList}>
           {labourReviews.map((review) => (
-            <View key={review.id} style={styles.reviewItem}>
+            <View key={review.id} style={styles.reviewCard}>
+              <View style={styles.reviewHeader}>
+                <View style={styles.reviewAuthorWrap}>
+                  <View style={styles.reviewAvatar}>
+                    <Text style={styles.reviewAvatarText}>
+                      {review.author?.charAt(0)?.toUpperCase() || 'U'}
+                    </Text>
+                  </View>
+                  <Text style={styles.reviewAuthor}>{review.author}</Text>
+                </View>
+
+                <View style={styles.reviewRatingChip}>
+                  <Ionicons name="star" size={11} color="#f4b740" />
+                  <Text style={styles.reviewRatingText}>5.0</Text>
+                </View>
+              </View>
+
               <Text style={styles.reviewText}>{review.text}</Text>
-              <Text style={styles.reviewAuthor}>{review.author}</Text>
             </View>
           ))}
         </View>
       </View>
 
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>{text.workHistoryTitle}</Text>
-        <View style={styles.preferenceList}>
+      <View style={styles.detailCard}>
+        <View style={styles.detailCardHeader}>
+          <View style={styles.detailCardTitleWrap}>
+            <Ionicons name="time-outline" size={13} color="#0c5a49" />
+            <Text style={styles.detailCardTitle}>{text.workHistoryTitle}</Text>
+          </View>
+        </View>
+
+        <View style={styles.historyList}>
           {labourWorkHistory.map((item) => (
-            <Text key={item.id} style={styles.preferenceItem}>
-              - {item.title} | {item.customer} | {text.ratingLabel} {item.rating}
-            </Text>
+            <View key={item.id} style={styles.historyCard}>
+              <View style={styles.historyTopRow}>
+                <Text style={styles.historyTitle}>{item.title}</Text>
+                <View style={styles.historyRatingChip}>
+                  <Ionicons name="star" size={11} color="#f4b740" />
+                  <Text style={styles.historyRatingText}>{item.rating}</Text>
+                </View>
+              </View>
+
+              <View style={styles.historyMetaRow}>
+                <Ionicons name="business-outline" size={12} color="#0c5a49" />
+                <Text style={styles.historyMetaText}>{item.customer}</Text>
+              </View>
+            </View>
           ))}
         </View>
       </View>
@@ -660,554 +713,3 @@ export function LabourDashboard({
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingBottom: 36,
-    gap: 18,
-  },
-  hero: {
-    backgroundColor: '#0c3b34',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 10,
-    gap: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
-  },
-  heroTop: {
-    gap: 8,
-  },
-  heroTopActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 10,
-  },
-  heroBody: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
-  },
-  heroCopy: {
-    flex: 1,
-    gap: 3,
-  },
-  badgeWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    alignSelf: 'flex-start',
-    backgroundColor: '#f5a623',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-  },
-  heroBadge: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  logoutPill: {
-    backgroundColor: '#ffffff',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  logoutPillText: {
-    color: '#35554d',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  heroHello: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 19,
-  },
-  heroName: {
-    color: '#54d7a0',
-    fontSize: 31,
-    fontWeight: '800',
-    lineHeight: 35,
-  },
-  heroSubtitle: {
-    color: 'rgba(232, 243, 239, 0.78)',
-    fontSize: 11,
-    lineHeight: 16,
-    maxWidth: 185,
-  },
-  heroAvatarWrap: {
-    width: 72,
-    height: 72,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  heroAvatarCircle: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
-    borderWidth: 2,
-    borderColor: '#f3f0e8',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroAvatarLetter: {
-    color: '#f8f7f0',
-    fontSize: 31,
-    fontWeight: '700',
-  },
-  heroAvatarEdit: {
-    position: 'absolute',
-    right: 2,
-    bottom: 5,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  contactCard: {
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 13,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.04)',
-  },
-  contactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  contactText: {
-    color: 'rgba(255,255,255,0.88)',
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'nowrap',
-    justifyContent: 'space-between',
-    gap: 6,
-  },
-  todayWorkCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#e6f4f1',
-    padding: 14,
-    borderRadius: 16,
-    gap: 12,
-  },
-  todayLeft: {
-    flexDirection: 'row',
-    flex: 1,
-    alignItems: 'center',
-  },
-  iconWrap: {
-    width: 45,
-    height: 45,
-    borderRadius: 10,
-    backgroundColor: '#cdebe4',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  icon: {
-    fontSize: 22,
-  },
-  textWrap: {
-    flex: 1,
-  },
-  todayTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0f3d3e',
-  },
-  todaySubtitle: {
-    fontSize: 12,
-    color: '#4b5563',
-    marginTop: 2,
-  },
-  panel: {
-    backgroundColor: colors.panel,
-    borderRadius: radius.lg,
-    padding: 20,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  panelTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  notificationList: {
-    gap: 8,
-  },
-  notificationItem: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.md,
-    padding: 12,
-    gap: 4,
-  },
-  notificationText: {
-    color: colors.primary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  notificationTime: {
-    color: colors.textMuted,
-    fontSize: 12,
-  },
-  profileSectionWrap: {
-    marginTop: 4,
-  },
-  profileCard: {
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 12,
-  },
-  profileHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 10,
-  },
-  profileHeaderBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  profileHeaderBadgeText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  profileHeaderEditPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.45)',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  profileHeaderEditPillText: {
-    color: '#ffffff',
-    fontSize: 9,
-    fontWeight: '600',
-  },
-  profileContentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  avatarCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#8db79a',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarLetter: {
-    color: '#ffffff',
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  profileInfoBlock: {
-    flex: 1,
-    gap: 2,
-  },
-  profileName: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  profileWork: {
-    color: '#e8f4ef',
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  profileMetaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 4,
-  },
-  profileMetaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  profileMetaText: {
-    color: '#ffffff',
-    fontSize: 9.5,
-    fontWeight: '600',
-  },
-  profileActionRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  profileActionLight: {
-    flex: 1,
-    minHeight: 34,
-    borderRadius: 6,
-    backgroundColor: '#ffffff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  profileActionLightText: {
-    color: '#0e5a49',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  profileActionDark: {
-    flex: 1,
-    minHeight: 34,
-    borderRadius: 6,
-    backgroundColor: '#145c4d',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  profileActionDarkText: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  editForm: {
-    gap: 8,
-  },
-  editInput: {
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    color: '#ffffff',
-    fontSize: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  detailCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: '#e6ece8',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  detailCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 10,
-  },
-  detailCardTitleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  detailCardTitle: {
-    color: '#273632',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  detailCardLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  detailCardLinkText: {
-    color: '#718278',
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  detailCardHint: {
-    color: '#718278',
-    fontSize: 10,
-    fontWeight: '500',
-  },
-  skillEditorWrap: {
-    gap: 10,
-  },
-  editorInputRow: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-  },
-  editorInput: {
-    flex: 1,
-    minHeight: 40,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#dbe7e1',
-    backgroundColor: '#f8fbf9',
-    paddingHorizontal: 12,
-    color: '#28443d',
-    fontSize: 12,
-  },
-  editorAddButton: {
-    backgroundColor: '#0c5a49',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    minHeight: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  editorAddButtonText: {
-    color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  detailChipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  detailChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#edf5f1',
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 999,
-  },
-  detailChipText: {
-    fontSize: 10.5,
-    fontWeight: '600',
-    color: '#325048',
-  },
-  editorActionRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  editorSecondaryButton: {
-    flex: 1,
-    minHeight: 38,
-    borderRadius: 10,
-    backgroundColor: '#edf5f1',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  editorSecondaryButtonText: {
-    color: '#0c5a49',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  editorPrimaryButton: {
-    flex: 1,
-    minHeight: 38,
-    borderRadius: 10,
-    backgroundColor: '#0c5a49',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  editorPrimaryButtonText: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  preferenceMetaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  preferenceMetaItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 5,
-    flex: 1,
-    minWidth: '30%',
-  },
-  preferenceMetaText: {
-    color: '#4f6760',
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 14,
-    flexShrink: 1,
-  },
-  preferenceList: {
-    gap: 8,
-  },
-  preferenceItem: {
-    color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  jobsList: {
-    gap: 12,
-  },
-  reviewItem: {
-    backgroundColor: colors.panelMuted,
-    borderRadius: radius.md,
-    padding: 16,
-    gap: 8,
-  },
-  reviewText: {
-    color: colors.textMuted,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  reviewAuthor: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  messageList: {
-    gap: 12,
-  },
-  messageItem: {
-    backgroundColor: colors.panelMuted,
-    borderRadius: radius.md,
-    padding: 16,
-    gap: 8,
-  },
-  messageName: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  messageText: {
-    color: colors.textMuted,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  messageStatus: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-});
