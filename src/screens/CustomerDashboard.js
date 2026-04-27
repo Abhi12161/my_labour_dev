@@ -2,7 +2,6 @@ import { startTransition, useDeferredValue, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { FilterBar } from '../components/FilterBar';
 import { InfoPanel } from '../components/InfoPanel';
 import { JobCard } from '../components/JobCard';
@@ -168,37 +167,53 @@ export function CustomerDashboard({
         onClear={clearFilters}
       />
 
-      <View style={styles.jobsHeader}>
-        <Text style={styles.jobsTitle}>{text.availableLaboursTitle}</Text>
-        <Text style={styles.jobsCount}>{filteredLabours.length}</Text>
-      </View>
-
-      <View style={styles.jobsList}>
-        {filteredLabours.length ? (
-          filteredLabours.map((labour) => <LabourCard key={labour.id} copy={text} labour={labour} />)
-        ) : (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>{text.noLabours}</Text>
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleWrap}>
+            <Ionicons name="people-outline" size={13} color="#0c5a49" />
+            <Text style={styles.sectionTitle}>{text.availableLaboursTitle}</Text>
           </View>
-        )}
-      </View>
-
-      <View style={styles.wrapperGradient}>
-        <LinearGradient colors={['rgba(209, 250, 229, 1)', 'rgba(0, 128, 0, 1)']} style={styles.panelGradient}>
-          <Text style={styles.panelTitleGradient}>{text.popularSkillsTitle}</Text>
-
-          <View style={styles.skillRowGradient}>
-            {popularSkills.map((skill) => (
-              <LinearGradient key={skill} colors={['#ecfdf5', '#ffffff']} style={styles.skillChipGradient}>
-                <Text style={styles.skillTextGradient}>{skill}</Text>
-              </LinearGradient>
-            ))}
+          <View style={styles.countBadge}>
+            <Text style={styles.countBadgeText}>{filteredLabours.length}</Text>
           </View>
-        </LinearGradient>
+        </View>
+
+        <View style={styles.jobsList}>
+          {filteredLabours.length ? (
+            filteredLabours.map((labour) => <LabourCard key={labour.id} copy={text} labour={labour} />)
+          ) : (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>{text.noLabours}</Text>
+            </View>
+          )}
+        </View>
       </View>
 
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>{text.availableJobsTitle}</Text>
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleWrap}>
+            <Ionicons name="medal-outline" size={13} color="#0c5a49" />
+            <Text style={styles.sectionTitle}>{text.popularSkillsTitle}</Text>
+          </View>
+        </View>
+
+        <View style={styles.skillRowGradient}>
+          {popularSkills.map((skill) => (
+            <View key={skill} style={styles.skillChipGradient}>
+              <Text style={styles.skillTextGradient}>{skill}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleWrap}>
+            <Ionicons name="briefcase-outline" size={13} color="#0c5a49" />
+            <Text style={styles.sectionTitle}>{text.availableJobsTitle}</Text>
+          </View>
+        </View>
+
         <View style={styles.jobsList}>
           {postedJobs.map((job) => (
             <JobCard key={job.id} copy={text} job={job} />
@@ -208,9 +223,13 @@ export function CustomerDashboard({
 
       <InfoPanel title={text.notifyTitle} body={text.notifyCustomer} />
 
-      <View style={styles.msgWrapper}>
-        <LinearGradient colors={['#ecfdf5', '#ffffff']} style={styles.msgPanel}>
-          <Text style={styles.msgTitle}>{text.messengerTitle}</Text>
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleWrap}>
+            <Ionicons name="chatbubble-ellipses-outline" size={13} color="#0c5a49" />
+            <Text style={styles.sectionTitle}>{text.messengerTitle}</Text>
+          </View>
+        </View>
 
           <View style={styles.msgList}>
             {customerMessages.map((item) => (
@@ -226,7 +245,6 @@ export function CustomerDashboard({
               </View>
             ))}
           </View>
-        </LinearGradient>
       </View>
 
       <JobPostModal
@@ -385,7 +403,7 @@ const styles = StyleSheet.create({
   },
   postJobBar: {
     backgroundColor: colors.panel,
-    borderRadius: radius.lg,
+    borderRadius: 12,
     padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -409,36 +427,64 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  jobsHeader: {
+  sectionCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#e6ece8',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 12,
   },
-  jobsTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '800',
+  sectionTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  jobsCount: {
-    color: colors.textMuted,
-    fontSize: 14,
+  sectionTitle: {
+    color: '#273632',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  countBadge: {
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#e0efe8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  countBadgeText: {
+    color: '#0c5a49',
+    fontSize: 10,
     fontWeight: '700',
   },
   jobsList: {
     gap: 12,
   },
   emptyCard: {
-    backgroundColor: colors.panel,
-    borderRadius: radius.lg,
-    padding: 24,
+    backgroundColor: '#f6fbf8',
+    borderRadius: 14,
+    padding: 18,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: '#e2eee8',
   },
   emptyText: {
-    color: colors.textMuted,
-    fontSize: 14,
+    color: '#5d726a',
+    fontSize: 12,
     textAlign: 'center',
   },
   panel: {
@@ -454,35 +500,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
   },
-  msgWrapper: {
-    marginHorizontal: 16,
-    marginTop: 12,
-  },
-  msgPanel: {
-    borderRadius: 18,
-    padding: 16,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  msgTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#111827',
-  },
   msgList: {
     gap: 10,
   },
   msgItem: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f6fbf8',
     borderRadius: 14,
     padding: 12,
     gap: 6,
     borderWidth: 1,
-    borderColor: '#eef2f1',
+    borderColor: '#e2eee8',
   },
   msgHeader: {
     flexDirection: 'row',
@@ -504,40 +531,20 @@ const styles = StyleSheet.create({
     color: '#4b5563',
     lineHeight: 16,
   },
-  wrapperGradient: {
-    borderRadius: 18,
-    padding: 2.5,
-  },
-  panelGradient: {
-    borderRadius: 18,
-    padding: 16,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  panelTitleGradient: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#1a1a1a',
-  },
   skillRowGradient: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
   },
   skillChipGradient: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    backgroundColor: '#edf5f1',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
   skillTextGradient: {
-    fontSize: 13,
+    fontSize: 10.5,
     fontWeight: '600',
-    color: '#1f7a63',
+    color: '#325048',
   },
 });
