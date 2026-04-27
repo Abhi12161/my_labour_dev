@@ -193,7 +193,7 @@ export function CustomerDashboard({
       </View>
 
       {/* Information panel about Muzaffarpur focus */}
-      <InfoPanel title={`${text.focusMuzaffarpur}${location.fullData?.address?.city || ''}`} body={text.focusMuzaffarpurBody} tone="accent" />
+      {/* <InfoPanel title={`${text.focusMuzaffarpur}${location.fullData?.address?.city || ''}`} body={text.focusMuzaffarpurBody} tone="accent" /> */}
 
       {/* Job posting section */}
       <Pressable style={styles.postJobBar} onPress={() => setJobModalVisible(true)}>
