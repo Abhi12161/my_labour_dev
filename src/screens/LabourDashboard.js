@@ -154,25 +154,48 @@ export function LabourDashboard({
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.hero}>
         <View style={styles.heroTop}>
-          <View style={styles.heroCopy}>
+          <View style={styles.heroTopActions}>
             <View style={styles.badgeWrap}>
-              <Text style={styles.heroBadge}>{text.labourDashboardBadge}</Text>
+              <Ionicons name="home" size={11} color="#ffffff" />
+              <Text style={styles.heroBadge}>{text.customerDashboardBadge}</Text>
             </View>
 
-            <Text style={styles.heroTitle}>
-              {text.hello},{' '}
-              <Text style={styles.heroName}>{session?.user?.name || 'User'}</Text>
-            </Text>
+            <Pressable style={styles.logoutPill} onPress={onLogout}>
+              <Ionicons name="log-out-outline" size={13} color="#35554d" />
+              <Text style={styles.logoutPillText}>{text.logout}</Text>
+            </Pressable>
+          </View>
+        </View>
 
-            <Text style={styles.heroSubtitle}>{text.labourSubtitle}</Text>
+        <View style={styles.heroBody}>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroHello}>{text.hello},</Text>
+            <Text style={styles.heroName}>{session?.user?.name || 'User'}</Text>
+
+            <Text style={styles.heroSubtitle}>{text.customerSubtitle}</Text>
           </View>
 
-          <PrimaryButton label={text.logout} onPress={onLogout} variant="ghost" />
+          <View style={styles.heroAvatarWrap}>
+            <View style={styles.heroAvatarCircle}>
+              <Text style={styles.heroAvatarLetter}>
+                {(session?.user?.name || 'A').charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.heroAvatarEdit}>
+              <Ionicons name="create-outline" size={11} color="#35554d" />
+            </View>
+          </View>
         </View>
 
         <View style={styles.contactCard}>
-          <Text style={styles.contactText}>{session?.user?.email}</Text>
-          <Text style={styles.contactText}>{session?.user?.phone}</Text>
+          <View style={styles.contactRow}>
+            <Ionicons name="mail-outline" size={12} color="#ffffff" />
+            <Text style={styles.contactText}>{session?.user?.email}</Text>
+          </View>
+          <View style={styles.contactRow}>
+            <Ionicons name="call-outline" size={12} color="#ffffff" />
+            <Text style={styles.contactText}>{session?.user?.phone}</Text>
+          </View>
         </View>
       </View>
 
@@ -461,10 +484,12 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   hero: {
-    backgroundColor: '#0f2f2a',
-    borderRadius: 24,
-    padding: 22,
-    gap: 18,
+    backgroundColor: '#0c3b34',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 10,
+    gap: 14,
     shadowColor: '#000',
     shadowOpacity: 0.25,
     shadowRadius: 15,
@@ -472,52 +497,121 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   heroTop: {
+    gap: 8,
+  },
+  heroTopActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    gap: 10,
+  },
+  heroBody: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     gap: 12,
   },
   heroCopy: {
     flex: 1,
-    gap: 8,
+    gap: 3,
   },
   badgeWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     alignSelf: 'flex-start',
-    backgroundColor: '#ff9f1c',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: '#f5a623',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 999,
   },
   heroBadge: {
     color: '#fff',
-    fontSize: 12,
-    fontWeight: '800',
+    fontSize: 10,
+    fontWeight: '700',
   },
-  heroTitle: {
+  logoutPill: {
+    backgroundColor: '#ffffff',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  logoutPillText: {
+    color: '#35554d',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  heroHello: {
     color: '#fff',
-    fontSize: 26,
-    fontWeight: '800',
-    lineHeight: 34,
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 19,
   },
   heroName: {
-    color: '#00e6a8',
+    color: '#54d7a0',
+    fontSize: 31,
+    fontWeight: '800',
+    lineHeight: 35,
   },
   heroSubtitle: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 14,
-    lineHeight: 20,
+    color: 'rgba(232, 243, 239, 0.78)',
+    fontSize: 11,
+    lineHeight: 16,
+    maxWidth: 185,
+  },
+  heroAvatarWrap: {
+    width: 72,
+    height: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  heroAvatarCircle: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    borderWidth: 2,
+    borderColor: '#f3f0e8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroAvatarLetter: {
+    color: '#f8f7f0',
+    fontSize: 31,
+    fontWeight: '700',
+  },
+  heroAvatarEdit: {
+    position: 'absolute',
+    right: 2,
+    bottom: 5,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   contactCard: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    padding: 12,
-    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 13,
     gap: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.04)',
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
   },
   contactText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 13,
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: 11,
+    fontWeight: '500',
   },
   statsGrid: {
     flexDirection: 'row',
