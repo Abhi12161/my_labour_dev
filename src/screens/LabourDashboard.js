@@ -186,13 +186,15 @@ export function LabourDashboard({
             </View>
 
             {/* Greeting */}
-            <Text style={styles.heroTitle}>
+            <Text style={styles.heroTitle} numberOfLines={2}>
               {text.hello},{" "}
-              <Text style={styles.name}>{session.user.name}</Text>
+              <Text style={styles.name}>
+                {session?.user?.name || "User"}
+              </Text>
             </Text>
 
             {/* Subtitle */}
-            <Text style={styles.heroSubtitle}>
+            <Text style={styles.heroSubtitle} numberOfLines={2}>
               {text.customerSubtitle}
             </Text>
 
@@ -203,17 +205,18 @@ export function LabourDashboard({
             label={text.logout}
             onPress={onLogout}
             variant="ghost"
+            style={{ paddingHorizontal: 12 }}
           />
 
         </View>
 
         {/* Profile Info Section */}
         <View style={styles.profileCard}>
-          <Text style={styles.profileText}>
-            📧 {session.user.email}
+          <Text style={styles.profileText} numberOfLines={1}>
+            📧 {session?.user?.email}
           </Text>
-          <Text style={styles.profileText}>
-            📱 {session.user.phone}
+          <Text style={styles.profileText} numberOfLines={1}>
+            📱 {session?.user?.phone}
           </Text>
         </View>
 
@@ -240,12 +243,33 @@ export function LabourDashboard({
       </View>
 
       {/* Today Work Button */}
-      <View style={styles.todayWorkContainer}>
+      <View style={styles.todayWorkCard}>
+
+        {/* Left Side (Icon + Text) */}
+        <View style={styles.todayLeft}>
+
+          {/* Worker Icon */}
+          <View style={styles.iconWrap}>
+            <Text style={styles.icon}>👷</Text>
+          </View>
+
+          {/* Text Content */}
+          <View style={styles.textWrap}>
+            <Text style={styles.title}>Today Work</Text>
+            <Text style={styles.subtitle}>
+              View and manage all your work requests and bookings.
+            </Text>
+          </View>
+
+        </View>
+
+        {/* Right Button */}
         <PrimaryButton
-          label={text.todayWorkButton}
+          label="View Today →"
           onPress={handleTodayWork}
-          variant="primary"
+          style={styles.todayBtn}
         />
+
       </View>
 
       {/* Notifications section */}
@@ -266,96 +290,133 @@ export function LabourDashboard({
       )}
 
       {/* Profile section */}
-      <View style={styles.profileWrapper}>
-        <LinearGradient
-          colors={['rgba(0, 150, 136, 1)', 'rgba(32, 122, 99, 1)']}
-          style={styles.profilePanel}
-        >
+     <View style={styles.wrapper}>
+      <LinearGradient
+        colors={["#0d3b3b", "#14532d"]}
+        style={styles.card}
+      >
 
-          <Text style={styles.profilePanelTitle}>
-            {text.profileTitle}
-          </Text>
+        {/* Top Row */}
+        <View style={styles.topRow}>
+          <Text style={styles.title}>Labour profile</Text>
 
-          <View style={styles.profileHeaderNew}>
+          {!isEditingProfile && (
+            <PrimaryButton
+              label="✏️ Edit Profile"
+              variant="ghost"
+              onPress={() => setIsEditingProfile(true)}
+              style={styles.topEditBtn}
+            />
+          )}
+        </View>
 
-            {/* AVATAR */}
-            <LinearGradient
-              colors={['#667eea', '#764ba2']}
-              style={styles.avatarNew}
-            >
-              <Text style={styles.avatarTextNew}>
-                {profile.name?.charAt(0)}
-              </Text>
-            </LinearGradient>
-
-            {/* PROFILE */}
-            <View style={styles.profileCopyNew}>
-              {isEditingProfile ? (
-                <>
-                  <TextInput
-                    style={styles.editInputNew}
-                    value={editedProfile.name}
-                    onChangeText={(v) =>
-                      setEditedProfile(p => ({ ...p, name: v }))
-                    }
-                    placeholder="Name"
-                  />
-                  <TextInput
-                    style={styles.editInputNew}
-                    value={editedProfile.title}
-                    onChangeText={(v) =>
-                      setEditedProfile(p => ({ ...p, title: v }))
-                    }
-                    placeholder="Title"
-                  />
-                  <TextInput
-                    style={styles.editInputNew}
-                    value={editedProfile.location}
-                    onChangeText={(v) =>
-                      setEditedProfile(p => ({ ...p, location: v }))
-                    }
-                    placeholder="Location"
-                  />
-                  <TextInput
-                    style={styles.editInputNew}
-                    value={editedProfile.phone}
-                    onChangeText={(v) =>
-                      setEditedProfile(p => ({ ...p, phone: v }))
-                    }
-                    placeholder="Phone"
-                  />
-                </>
-              ) : (
-                <>
-                  <Text style={styles.profileNameNew}>{profile.name}</Text>
-                  <Text style={styles.profileTitleTextNew}>{profile.title}</Text>
-                  <Text style={styles.profileMetaNew}>📍 {profile.location}</Text>
-                  <Text style={styles.profileMetaNew}>📞 {profile.phone}</Text>
-                  <Text style={styles.profileMetaNew}>
-                    ⭐ {profile.rating} ({profile.reviews})
-                  </Text>
-                </>
-              )}
-            </View>
+        {/* Profile Row */}
+        <View style={styles.row}>
+          {/* Avatar */}
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {profile.name?.charAt(0)}
+            </Text>
           </View>
 
-          {/* BUTTONS */}
-          <View style={styles.buttonRowNew}>
+          {/* Info */}
+          <View style={styles.info}>
+
             {isEditingProfile ? (
               <>
-                <PrimaryButton label="Save" onPress={handleSaveProfile} />
-                <PrimaryButton label="Cancel" onPress={handleCancelEdit} variant="ghost" />
+                <TextInput
+                  style={styles.input}
+                  value={editedProfile.name}
+                  onChangeText={(v) =>
+                    setEditedProfile(p => ({ ...p, name: v }))
+                  }
+                  placeholder="Name"
+                  placeholderTextColor="#ccc"
+                />
+
+                <TextInput
+                  style={styles.input}
+                  value={editedProfile.title}
+                  onChangeText={(v) =>
+                    setEditedProfile(p => ({ ...p, title: v }))
+                  }
+                  placeholder="Work"
+                  placeholderTextColor="#ccc"
+                />
+
+                <TextInput
+                  style={styles.input}
+                  value={editedProfile.location}
+                  onChangeText={(v) =>
+                    setEditedProfile(p => ({ ...p, location: v }))
+                  }
+                  placeholder="Location"
+                  placeholderTextColor="#ccc"
+                />
+
+                <TextInput
+                  style={styles.input}
+                  value={editedProfile.phone}
+                  onChangeText={(v) =>
+                    setEditedProfile(p => ({ ...p, phone: v }))
+                  }
+                  placeholder="Phone"
+                  placeholderTextColor="#ccc"
+                />
               </>
             ) : (
               <>
-                <PrimaryButton label={text.updateSkills} onPress={() => { }} variant="ghost" />
-                <PrimaryButton label={text.editProfile} onPress={() => setIsEditingProfile(true)} variant="ghost" />
+                <Text style={styles.name}>{profile.name}</Text>
+                <Text style={styles.work}>{profile.title}</Text>
+
+                <Text style={styles.meta}>
+                  📍 {profile.location}   📞 {profile.phone}
+                </Text>
+
+                <Text style={styles.rating}>
+                  ⭐ {profile.rating} ({profile.reviews})
+                </Text>
               </>
             )}
-          </View>
 
-        </LinearGradient>
-      </View>
+          </View>
+        </View>
+
+        {/* Bottom Buttons */}
+        <View style={styles.bottomRow}>
+          {isEditingProfile ? (
+            <>
+              <PrimaryButton
+                label="💾 Save"
+                onPress={handleSaveProfile}
+                style={styles.smallBtn}
+              />
+              <PrimaryButton
+                label="❌ Cancel"
+                variant="ghost"
+                onPress={handleCancelEdit}
+                style={styles.smallBtn}
+              />
+            </>
+          ) : (
+            <>
+              <PrimaryButton
+                label="⬆️ Update Skills"
+                variant="ghost"
+                style={styles.smallBtn}
+              />
+              <PrimaryButton
+                label="✏️ Edit Profile"
+                variant="ghost"
+                onPress={() => setIsEditingProfile(true)}
+                style={styles.smallBtn}
+              />
+            </>
+          )}
+        </View>
+
+      </LinearGradient>
+    </View>
 
       {/* Skills and certifications section */}
       <View style={styles.skillsWrapper}>
@@ -465,73 +526,67 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   hero: {
-    backgroundColor: '#0f2f2a', // deep premium green
-    borderRadius: 24,
-    padding: 22,
-    gap: 18,
-
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 8 },
-
-    elevation: 6,
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: "#0f3d3e",
   },
 
   heroTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
 
   heroCopy: {
     flex: 1,
-    gap: 8,
+    paddingRight: 10, // 🔥 important for text spacing
   },
 
   badgeWrap: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#ff9f1c',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
+    backgroundColor: "#f59e0b",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    alignSelf: "flex-start",
+    marginBottom: 8,
   },
 
   heroBadge: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: "600",
   },
 
   heroTitle: {
-    color: '#fff',
-    fontSize: 26,
-    fontWeight: '800',
-    lineHeight: 34,
+    fontSize: 18,
+    color: "#fff",
+    fontWeight: "600",
+    flexWrap: "wrap", // 🔥 fix text cutting
   },
 
   name: {
-    color: '#00e6a8', // highlight name
+    color: "#22c55e",
+    fontWeight: "700",
   },
 
   heroSubtitle: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    color: "#d1d5db",
+    marginTop: 4,
+    flexWrap: "wrap",
   },
+
   profileCard: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    padding: 12,
-    borderRadius: 14,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    marginTop: 12,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    padding: 10,
+    borderRadius: 12,
   },
 
   profileText: {
-    color: 'rgba(255,255,255,0.85)',
+    color: "#fff",
     fontSize: 13,
+    marginBottom: 4,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -755,5 +810,281 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#fff',
+  },
+  todayWorkCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#e6f4f1",
+    padding: 14,
+    borderRadius: 16,
+    marginTop: 16,
+  },
+
+  todayLeft: {
+    flexDirection: "row",
+    flex: 1,
+    alignItems: "center",
+    paddingRight: 10,
+  },
+
+  iconWrap: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: "#cdebe4",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+
+  icon: {
+    fontSize: 24,
+  },
+
+  textWrap: {
+    flex: 1,
+  },
+
+  title: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0f3d3e",
+  },
+
+  subtitle: {
+    fontSize: 12,
+    color: "#4b5563",
+    marginTop: 2,
+  },
+
+  todayBtn: {
+    paddingHorizontal: 14,
+    height: 36,
+    borderRadius: 20,
+  },
+
+  profileCard: {
+    borderRadius: 20,
+    padding: 16,
+  },
+
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+
+  profileTitle: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  profileRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 50,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+
+  avatarText: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "700",
+  },
+
+  profileInfo: {
+    flex: 1,
+  },
+
+  name: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  work: {
+    color: "#d1fae5",
+    fontSize: 13,
+  },
+
+  meta: {
+    color: "#e5e7eb",
+    fontSize: 12,
+    marginTop: 3,
+  },
+
+  rating: {
+    color: "#facc15",
+    fontSize: 12,
+    marginTop: 3,
+  },
+
+  input: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+    borderRadius: 10,
+    padding: 8,
+    color: "#fff",
+    marginBottom: 6,
+  },
+
+  bottomRow: {
+    flexDirection: "row",
+    marginTop: 12,
+    gap: 10,
+  },
+
+  bottomBtn: {
+    flex: 1,
+  },
+
+  /* TODAY WORK */
+
+  todayWorkCard: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#e6f4f1",
+    padding: 14,
+    borderRadius: 16,
+    marginTop: 16,
+  },
+
+  todayLeft: {
+    flexDirection: "row",
+    flex: 1,
+    alignItems: "center",
+  },
+
+  iconWrap: {
+    width: 45,
+    height: 45,
+    borderRadius: 10,
+    backgroundColor: "#cdebe4",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+
+  todayTitle: {
+    fontWeight: "700",
+    fontSize: 14,
+  },
+
+  todaySubtitle: {
+    fontSize: 12,
+    color: "#555",
+  },
+
+  todayBtn: {
+    height: 36,
+    paddingHorizontal: 12,
+  },
+   wrapper: {
+    padding: 16,
+  },
+
+  card: {
+    borderRadius: 18,
+    padding: 14,
+  },
+
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  title: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  topEditBtn: {
+    height: 28,
+    paddingHorizontal: 10,
+  },
+
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 50,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+
+  avatarText: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+
+  info: {
+    flex: 1,
+  },
+
+  name: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+
+  work: {
+    color: "#d1fae5",
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  meta: {
+    color: "#e5e7eb",
+    fontSize: 11,
+    marginTop: 2,
+  },
+
+  rating: {
+    color: "#facc15",
+    fontSize: 11,
+    marginTop: 2,
+  },
+
+  input: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+    borderRadius: 10,
+    padding: 6,
+    color: "#fff",
+    marginBottom: 6,
+    fontSize: 12,
+  },
+
+  bottomRow: {
+    flexDirection: "row",
+    marginTop: 12,
+    gap: 10,
+  },
+
+  smallBtn: {
+    flex: 1,
+    height: 32,
+    borderRadius: 20,
   },
 });
