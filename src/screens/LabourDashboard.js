@@ -26,6 +26,36 @@ import {
 import { saveJobApplication, saveProfileUpdate, saveTodayWorkRequest } from '../services/http';
 import { colors, radius } from '../theme/tokens';
 
+const skillEditorCopy = {
+  en: {
+    addSkill: 'Add skill',
+    addCertificate: 'Add certificate',
+    skillPlaceholder: 'Type skill',
+    certificatePlaceholder: 'Type certificate',
+    saveSkills: 'Save skills',
+    cancelSkills: 'Cancel',
+    removeHint: 'Tap chip to remove',
+  },
+  hi: {
+    addSkill: 'स्किल जोड़ें',
+    addCertificate: 'सर्टिफिकेट जोड़ें',
+    skillPlaceholder: 'स्किल लिखें',
+    certificatePlaceholder: 'सर्टिफिकेट लिखें',
+    saveSkills: 'स्किल सेव करें',
+    cancelSkills: 'रद्द करें',
+    removeHint: 'हटाने के लिए चिप दबाएं',
+  },
+  bho: {
+    addSkill: 'Skill जोड़ीं',
+    addCertificate: 'Certificate जोड़ीं',
+    skillPlaceholder: 'Skill लिखीं',
+    certificatePlaceholder: 'Certificate लिखीं',
+    saveSkills: 'Skill save करीं',
+    cancelSkills: 'Cancel करीं',
+    removeHint: 'हटावे खातिर chip दबाईं',
+  },
+};
+
 export function LabourDashboard({
   language,
   onLogout,
@@ -33,11 +63,17 @@ export function LabourDashboard({
   session,
 }) {
   const text = copy[language];
+  const editorText = skillEditorCopy[language] || skillEditorCopy.en;
   const [profile, setProfile] = useState(labourProfile);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingSkills, setIsEditingSkills] = useState(false);
   const [editedProfile, setEditedProfile] = useState(profile);
   const [notifications, setNotifications] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
+  const [draftSkills, setDraftSkills] = useState(profile.skills);
+  const [draftCertifications, setDraftCertifications] = useState(profile.certifications);
+  const [skillInput, setSkillInput] = useState('');
+  const [certificateInput, setCertificateInput] = useState('');
 
   useEffect(() => {
     if (isEditingProfile) {
@@ -59,6 +95,83 @@ export function LabourDashboard({
   const handleCancelEdit = () => {
     setEditedProfile(profile);
     setIsEditingProfile(false);
+  };
+
+  const handleStartSkillsEdit = () => {
+    setDraftSkills(profile.skills);
+    setDraftCertifications(profile.certifications);
+    setSkillInput('');
+    setCertificateInput('');
+    setIsEditingSkills(true);
+  };
+
+  const addUniqueItem = (value, setter, list) => {
+    const cleaned = value.trim();
+    if (!cleaned) {
+      return false;
+    }
+
+    const exists = list.some((item) => item.toLowerCase() === cleaned.toLowerCase());
+    if (exists) {
+      return false;
+    }
+
+    setter([...list, cleaned]);
+    return true;
+  };
+
+  const handleAddSkill = () => {
+    const added = addUniqueItem(skillInput, setDraftSkills, draftSkills);
+    if (added) {
+      setSkillInput('');
+    }
+  };
+
+  const handleAddCertificate = () => {
+    const added = addUniqueItem(certificateInput, setDraftCertifications, draftCertifications);
+    if (added) {
+      setCertificateInput('');
+    }
+  };
+
+  const handleRemoveSkill = (skillToRemove) => {
+    setDraftSkills((current) => current.filter((item) => item !== skillToRemove));
+  };
+
+  const handleRemoveCertification = (certificateToRemove) => {
+    setDraftCertifications((current) => current.filter((item) => item !== certificateToRemove));
+  };
+
+  const handleCancelSkillsEdit = () => {
+    setDraftSkills(profile.skills);
+    setDraftCertifications(profile.certifications);
+    setSkillInput('');
+    setCertificateInput('');
+    setIsEditingSkills(false);
+  };
+
+  const handleSaveSkills = async () => {
+    const updatedProfile = {
+      ...profile,
+      skills: draftSkills,
+      certifications: draftCertifications,
+    };
+
+    try {
+      await saveProfileUpdate(updatedProfile, session.user.id);
+      setProfile(updatedProfile);
+      setEditedProfile((current) => ({
+        ...current,
+        skills: draftSkills,
+        certifications: draftCertifications,
+      }));
+      setIsEditingSkills(false);
+      setSkillInput('');
+      setCertificateInput('');
+      Alert.alert(text.profileUpdatedTitle, text.profileUpdatedMessage);
+    } catch {
+      Alert.alert('Error', 'Failed to update profile.');
+    }
   };
 
   const handleApplyForJob = (job) => {
@@ -294,7 +407,7 @@ export function LabourDashboard({
               </View>
 
               <View style={styles.profileActionRow}>
-                <Pressable style={styles.profileActionLight}>
+                <Pressable style={styles.profileActionLight} onPress={handleStartSkillsEdit}>
                   <Ionicons name="briefcase-outline" size={13} color="#0e5a49" />
                   <Text style={styles.profileActionLightText}>{text.updateSkills}</Text>
                 </Pressable>
@@ -372,24 +485,95 @@ export function LabourDashboard({
             <Text style={styles.detailCardTitle}>{text.skillsTitle}</Text>
           </View>
 
-          <Pressable style={styles.detailCardLink}>
-            <Text style={styles.detailCardLinkText}>View all</Text>
-            <Ionicons name="arrow-forward" size={11} color="#6b7c74" />
-          </Pressable>
+          {!isEditingSkills ? (
+            <Pressable style={styles.detailCardLink} onPress={handleStartSkillsEdit}>
+              <Text style={styles.detailCardLinkText}>{text.updateSkills}</Text>
+              <Ionicons name="create-outline" size={11} color="#6b7c74" />
+            </Pressable>
+          ) : null}
         </View>
 
-        <View style={styles.detailChipRow}>
-          {[...labourProfile.skills, ...labourProfile.certifications].map((skill, index) => (
-            <View key={skill} style={styles.detailChip}>
-              <Ionicons
-                name={index % 2 === 0 ? 'hammer-outline' : 'briefcase-outline'}
-                size={12}
-                color="#0c5a49"
+        {isEditingSkills ? (
+          <View style={styles.skillEditorWrap}>
+            <Text style={styles.detailCardHint}>{editorText.removeHint}</Text>
+
+            <View style={styles.editorInputRow}>
+              <TextInput
+                style={styles.editorInput}
+                value={skillInput}
+                onChangeText={setSkillInput}
+                placeholder={editorText.skillPlaceholder}
+                placeholderTextColor="#7e8b84"
               />
-              <Text style={styles.detailChipText}>{skill}</Text>
+              <Pressable style={styles.editorAddButton} onPress={handleAddSkill}>
+                <Text style={styles.editorAddButtonText}>{editorText.addSkill}</Text>
+              </Pressable>
             </View>
-          ))}
-        </View>
+
+            <View style={styles.detailChipRow}>
+              {draftSkills.map((skill, index) => (
+                <Pressable key={skill} style={styles.detailChip} onPress={() => handleRemoveSkill(skill)}>
+                  <Ionicons
+                    name={index % 2 === 0 ? 'hammer-outline' : 'briefcase-outline'}
+                    size={12}
+                    color="#0c5a49"
+                  />
+                  <Text style={styles.detailChipText}>{skill}</Text>
+                  <Ionicons name="close" size={11} color="#0c5a49" />
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={styles.editorInputRow}>
+              <TextInput
+                style={styles.editorInput}
+                value={certificateInput}
+                onChangeText={setCertificateInput}
+                placeholder={editorText.certificatePlaceholder}
+                placeholderTextColor="#7e8b84"
+              />
+              <Pressable style={styles.editorAddButton} onPress={handleAddCertificate}>
+                <Text style={styles.editorAddButtonText}>{editorText.addCertificate}</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.detailChipRow}>
+              {draftCertifications.map((certificate) => (
+                <Pressable
+                  key={certificate}
+                  style={styles.detailChip}
+                  onPress={() => handleRemoveCertification(certificate)}
+                >
+                  <Ionicons name="ribbon-outline" size={12} color="#0c5a49" />
+                  <Text style={styles.detailChipText}>{certificate}</Text>
+                  <Ionicons name="close" size={11} color="#0c5a49" />
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={styles.editorActionRow}>
+              <Pressable style={styles.editorSecondaryButton} onPress={handleCancelSkillsEdit}>
+                <Text style={styles.editorSecondaryButtonText}>{editorText.cancelSkills}</Text>
+              </Pressable>
+              <Pressable style={styles.editorPrimaryButton} onPress={handleSaveSkills}>
+                <Text style={styles.editorPrimaryButtonText}>{editorText.saveSkills}</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.detailChipRow}>
+            {[...profile.skills, ...profile.certifications].map((skill, index) => (
+              <View key={skill} style={styles.detailChip}>
+                <Ionicons
+                  name={index % 2 === 0 ? 'hammer-outline' : 'briefcase-outline'}
+                  size={12}
+                  color="#0c5a49"
+                />
+                <Text style={styles.detailChipText}>{skill}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
 
       <View style={styles.detailCard}>
@@ -401,7 +585,7 @@ export function LabourDashboard({
         </View>
 
         <View style={styles.preferenceMetaRow}>
-          {labourProfile.preferences.map((item, index) => (
+          {profile.preferences.map((item, index) => (
             <View key={item} style={styles.preferenceMetaItem}>
               <Ionicons
                 name={
@@ -867,6 +1051,44 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
   },
+  detailCardHint: {
+    color: '#718278',
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  skillEditorWrap: {
+    gap: 10,
+  },
+  editorInputRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  editorInput: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#dbe7e1',
+    backgroundColor: '#f8fbf9',
+    paddingHorizontal: 12,
+    color: '#28443d',
+    fontSize: 12,
+  },
+  editorAddButton: {
+    backgroundColor: '#0c5a49',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editorAddButtonText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   detailChipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -885,6 +1107,36 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     fontWeight: '600',
     color: '#325048',
+  },
+  editorActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  editorSecondaryButton: {
+    flex: 1,
+    minHeight: 38,
+    borderRadius: 10,
+    backgroundColor: '#edf5f1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editorSecondaryButtonText: {
+    color: '#0c5a49',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  editorPrimaryButton: {
+    flex: 1,
+    minHeight: 38,
+    borderRadius: 10,
+    backgroundColor: '#0c5a49',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editorPrimaryButtonText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
   },
   preferenceMetaRow: {
     flexDirection: 'row',
