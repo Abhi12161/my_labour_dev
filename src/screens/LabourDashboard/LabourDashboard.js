@@ -10,20 +10,24 @@ import {
 
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { InfoPanel } from '../components/InfoPanel';
-import { JobCard } from '../components/JobCard';
-import { PrimaryButton } from '../components/PrimaryButton';
-import { StatCard } from '../components/StatCard';
-import { copy } from '../constants/copy';
+import { InfoPanel } from '../../components/InfoPanel';
+import { JobCard } from '../../components/JobCard';
+import { PrimaryButton } from '../../components/PrimaryButton';
+import { StatCard } from '../../components/StatCard';
+import { copy } from '../../constants/copy';
 import {
   labourMessages,
   labourOverviewStats,
   labourProfile,
   labourReviews,
   labourWorkHistory,
-} from '../data/dashboardData';
-import { saveJobApplication, saveProfileUpdate, saveTodayWorkRequest } from '../services/http';
-import { styles } from './LabourDashboard.styles';
+} from '../../data/dashboardData';
+import {
+  saveJobApplication,
+  saveProfileUpdate,
+  saveTodayWorkRequest,
+} from '../../services/http';
+import { styles } from './styles';
 
 const skillEditorCopy = {
   en: {
@@ -36,22 +40,22 @@ const skillEditorCopy = {
     removeHint: 'Tap chip to remove',
   },
   hi: {
-    addSkill: 'स्किल जोड़ें',
-    addCertificate: 'सर्टिफिकेट जोड़ें',
-    skillPlaceholder: 'स्किल लिखें',
-    certificatePlaceholder: 'सर्टिफिकेट लिखें',
-    saveSkills: 'स्किल सेव करें',
-    cancelSkills: 'रद्द करें',
-    removeHint: 'हटाने के लिए चिप दबाएं',
+    addSkill: 'à¤¸à¥à¤•à¤¿à¤² à¤œà¥‹à¤¡à¤¼à¥‡à¤‚',
+    addCertificate: 'à¤¸à¤°à¥à¤Ÿà¤¿à¤«à¤¿à¤•à¥‡à¤Ÿ à¤œà¥‹à¤¡à¤¼à¥‡à¤‚',
+    skillPlaceholder: 'à¤¸à¥à¤•à¤¿à¤² à¤²à¤¿à¤–à¥‡à¤‚',
+    certificatePlaceholder: 'à¤¸à¤°à¥à¤Ÿà¤¿à¤«à¤¿à¤•à¥‡à¤Ÿ à¤²à¤¿à¤–à¥‡à¤‚',
+    saveSkills: 'à¤¸à¥à¤•à¤¿à¤² à¤¸à¥‡à¤µ à¤•à¤°à¥‡à¤‚',
+    cancelSkills: 'à¤°à¤¦à¥à¤¦ à¤•à¤°à¥‡à¤‚',
+    removeHint: 'à¤¹à¤Ÿà¤¾à¤¨à¥‡ à¤•à¥‡ à¤²à¤¿à¤ à¤šà¤¿à¤ª à¤¦à¤¬à¤¾à¤à¤‚',
   },
   bho: {
-    addSkill: 'Skill जोड़ीं',
-    addCertificate: 'Certificate जोड़ीं',
-    skillPlaceholder: 'Skill लिखीं',
-    certificatePlaceholder: 'Certificate लिखीं',
-    saveSkills: 'Skill save करीं',
-    cancelSkills: 'Cancel करीं',
-    removeHint: 'हटावे खातिर chip दबाईं',
+    addSkill: 'Skill à¤œà¥‹à¤¡à¤¼à¥€à¤‚',
+    addCertificate: 'Certificate à¤œà¥‹à¤¡à¤¼à¥€à¤‚',
+    skillPlaceholder: 'Skill à¤²à¤¿à¤–à¥€à¤‚',
+    certificatePlaceholder: 'Certificate à¤²à¤¿à¤–à¥€à¤‚',
+    saveSkills: 'Skill save à¤•à¤°à¥€à¤‚',
+    cancelSkills: 'Cancel à¤•à¤°à¥€à¤‚',
+    removeHint: 'à¤¹à¤Ÿà¤¾à¤µà¥‡ à¤–à¤¾à¤¤à¤¿à¤° chip à¤¦à¤¬à¤¾à¤ˆà¤‚',
   },
 };
 
@@ -329,7 +333,7 @@ export function LabourDashboard({
       <View style={styles.todayWorkCard}>
         <View style={styles.todayLeft}>
           <View style={styles.iconWrap}>
-            <Text style={styles.icon}>👷</Text>
+            <Text style={styles.icon}>ðŸ‘·</Text>
           </View>
 
           <View style={styles.textWrap}>

@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
 
 import { initialPostedJobs } from '../data/dashboardData';
-import { AuthScreen } from '../screens/AuthScreen';
-import DashboardScreen from '../screens/DashboardScreen';
-import { RoleSelectionScreen } from '../screens/RoleSelectionScreen';
+import { AuthScreen } from '../screens/AuthScreen/AuthScreen';
+import DashboardScreen from '../screens/DashboardScreen/DashboardScreen';
+import { RoleSelectionScreen } from '../screens/RoleSelectionScreen/RoleSelectionScreen';
 import { colors } from '../theme/tokens';
 
 export default function RootApp() {

@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { colors, radius } from '../theme/tokens';
+import { colors, radius } from '../../theme/tokens';
 
 export const styles = StyleSheet.create({
   container: {
@@ -517,14 +517,6 @@ export const styles = StyleSheet.create({
     fontWeight: '500',
     lineHeight: 14,
     flexShrink: 1,
-  },
-  preferenceList: {
-    gap: 8,
-  },
-  preferenceItem: {
-    color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
   },
   jobsList: {
     gap: 12,
