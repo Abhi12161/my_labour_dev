@@ -6,6 +6,7 @@ import { colors, radius } from '../theme/tokens';
 export function FormInput({
   keyboardType,
   label,
+  multiline,
   onChangeText,
   placeholder,
   secureTextEntry,
@@ -20,11 +21,12 @@ export function FormInput({
       <View style={styles.inputShell}>
         <TextInput
           keyboardType={keyboardType}
+          multiline={multiline}
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor={colors.textMuted}
           secureTextEntry={isPassword && !showPassword}
-          style={styles.input}
+          style={[styles.input, multiline ? styles.multilineInput : null]}
           value={value}
           autoCapitalize="none"
         />
@@ -63,6 +65,10 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 15,
     paddingVertical: 14,
+  },
+  multilineInput: {
+    minHeight: 88,
+    textAlignVertical: 'top',
   },
   toggle: {
     color: colors.primary,

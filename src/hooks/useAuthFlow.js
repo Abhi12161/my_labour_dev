@@ -1,112 +1,87 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { Alert } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { copy } from '../constants/copy';
-import { login, signup } from '../services/authService';
+import {
+  authenticateDemo,
+  clearAuthError,
+  setRole,
+  submitAuth,
+  toggleAuthMode,
+  updateLoginField,
+  updateSignupField,
+} from '../store/authSlice';
 
-const initialLoginForm = {
-  email: '',
-  password: '',
-};
-
-const initialSignupForm = {
-  name: '',
-  email: '',
-  phone: '',
-  password: '',
-};
-
-export function useAuthFlow(language, onAuthenticated, initialRole = 'customer') {
+export function useAuthFlow(language, initialRole = 'customer') {
   const text = copy[language];
-  const [authMode, setAuthMode] = useState('login');
-  const [role, setRole] = useState(initialRole);
-  const [loginForm, setLoginForm] = useState(initialLoginForm);
-  const [signupForm, setSignupForm] = useState(initialSignupForm);
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const { authMode, loading, loginForm, role, signupForm, session, error } = useSelector(
+    (state) => state.auth
+  );
 
-  const updateLoginField = (field, value) => {
-    setLoginForm((current) => ({ ...current, [field]: value }));
-  };
-
-  const updateSignupField = (field, value) => {
-    setSignupForm((current) => ({ ...current, [field]: value }));
-  };
-
-  const switchMode = () => {
-    setAuthMode((current) => (current === 'login' ? 'signup' : 'login'));
-  };
+  useEffect(() => {
+    if (initialRole && role !== initialRole) {
+      dispatch(setRole(initialRole));
+    }
+  }, [dispatch, initialRole, role]);
 
   const submit = async () => {
     const activeForm = authMode === 'login' ? loginForm : signupForm;
     const requiredFields =
       authMode === 'login'
-        ? [activeForm.email, activeForm.password]
-        : [activeForm.name, activeForm.email, activeForm.phone, activeForm.password];
+        ? [activeForm.phone]
+        : [activeForm.name, activeForm.phone, activeForm.address];
 
     if (requiredFields.some((value) => !value.trim())) {
       Alert.alert(text.missingTitle, text.missingBody);
       return;
     }
 
-    setLoading(true);
+    const result = await dispatch(submitAuth());
 
-    try {
-      const response =
-        authMode === 'login' ? await login(loginForm) : await signup(signupForm);
-
-      const user =
-        response.user ||
-        (authMode === 'login'
-          ? {
-              name: response.name || 'User',
-              email: loginForm.email,
-              phone: response.phone || 'Not provided',
-            }
-          : {
-              name: signupForm.name,
-              email: signupForm.email,
-              phone: signupForm.phone,
-            });
-
-      onAuthenticated({
-        token: response.token || '',
-        user,
-        role,
-      });
-
+    if (submitAuth.fulfilled.match(result)) {
       Alert.alert(text.successTitle, authMode === 'login' ? text.loginSuccess : text.signupSuccess);
-      setLoginForm(initialLoginForm);
-      setSignupForm(initialSignupForm);
-    } catch (error) {
-      Alert.alert(text.errorTitle, error.message);
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    Alert.alert(text.errorTitle, result.payload || text.errorTitle);
   };
 
   const launchDemo = () => {
-    onAuthenticated({
-      token: 'demo-session',
-      user: {
-        name: 'Abhimanyu Kumar',
-        email: 'abhimanyu2021@gmail.com',
-        phone: '9262980734',
-      },
-      role,
-    });
+    dispatch(authenticateDemo());
+  };
+
+  const handleUpdateLoginField = (field, value) => {
+    dispatch(updateLoginField({ field, value }));
+  };
+
+  const handleUpdateSignupField = (field, value) => {
+    dispatch(updateSignupField({ field, value }));
+  };
+
+  const switchMode = () => {
+    dispatch(toggleAuthMode());
+  };
+
+  const handleSetRole = (nextRole) => {
+    dispatch(setRole(nextRole));
   };
 
   return {
     authMode,
+    error,
     loading,
     loginForm,
     role,
+    session,
     signupForm,
-    setRole,
+    setRole: handleSetRole,
     switchMode,
     submit,
     launchDemo,
-    updateLoginField,
-    updateSignupField,
+    updateLoginField: handleUpdateLoginField,
+    updateSignupField: handleUpdateSignupField,
+    clearError: () => dispatch(clearAuthError()),
   };
 }

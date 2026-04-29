@@ -182,7 +182,7 @@ export const initialPostedJobs = [
 ];
 
 export const labourProfile = {
-  name: 'Abhimanyu Kumar',
+  name: 'Rajan Kumar',
   title: 'Raj Mistri and Finishing Specialist',
   location: 'Muzaffarpur, Bihar',
   phone: '+91 9262980734',

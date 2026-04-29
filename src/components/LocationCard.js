@@ -42,7 +42,7 @@ export function LocationCard({ text }) {
         }),
       ])
     ).start();
-  }, []);
+  }, [pulseAnim]);
 
   // ✅ location fetch
   useEffect(() => {

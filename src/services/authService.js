@@ -1,23 +1,21 @@
 import { apiRequest } from './http';
 
 export function signup(payload) {
-  return apiRequest('/auth/signup', {
+  return apiRequest('/labour/signup', {
     method: 'POST',
     body: JSON.stringify({
       name: payload.name,
-      email: payload.email,
-      phone: payload.phone,
-      password: payload.password,
+      mobile: payload.phone,
+      address: payload.address,
     }),
   });
 }
 
 export function login(payload) {
-  return apiRequest('/auth/login', {
+  return apiRequest('/labour/login', {
     method: 'POST',
     body: JSON.stringify({
-      email: payload.email,
-      password: payload.password,
+      mobile: payload.phone,
     }),
   });
 }

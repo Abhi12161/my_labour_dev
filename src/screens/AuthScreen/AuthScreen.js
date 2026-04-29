@@ -11,7 +11,6 @@ import { styles } from './styles';
 
 export function AuthScreen({
   language,
-  onAuthenticated,
   onChangeLanguage,
   preSelectedRole,
   onBack,
@@ -30,7 +29,7 @@ export function AuthScreen({
     launchDemo,
     updateLoginField,
     updateSignupField,
-  } = useAuthFlow(language, onAuthenticated, preSelectedRole || 'customer');
+  } = useAuthFlow(language, preSelectedRole || 'customer');
 
   const isLogin = authMode === 'login';
   const showRoleSelector = !preSelectedRole;
@@ -77,20 +76,26 @@ export function AuthScreen({
               onChangeText={(value) => updateSignupField('address', value)}
               multiline
             />
+
+            <FormInput
+              label={text.phone}
+              placeholder={text.phonePlaceholder}
+              value={signupForm.phone}
+              keyboardType="phone-pad"
+              onChangeText={(value) => updateSignupField('phone', value)}
+            />
           </>
         )}
 
-        <FormInput
-          label={text.phone}
-          placeholder={text.phonePlaceholder}
-          value={isLogin ? loginForm.phone : signupForm.phone}
-          keyboardType="phone-pad"
-          onChangeText={(value) =>
-            isLogin
-              ? updateLoginField('phone', value)
-              : updateSignupField('phone', value)
-          }
-        />
+        {isLogin && (
+          <FormInput
+            label={text.phone}
+            placeholder={text.phonePlaceholder}
+            value={loginForm.phone}
+            keyboardType="phone-pad"
+            onChangeText={(value) => updateLoginField('phone', value)}
+          />
+        )}
 
         <PrimaryButton
           label={isLogin ? text.submitLogin : text.submitSignup}

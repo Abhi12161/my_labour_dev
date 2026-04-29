@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useSelector } from 'react-redux';
 import {
   Pressable,
   SafeAreaView,
@@ -7,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSelector } from 'react-redux';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher';
@@ -31,7 +31,7 @@ export function RoleSelectionScreen({ language, onChangeLanguage, onSelectRole }
       title: text.needWorkers || 'I need workers',
       description: 'Post your work and connect with nearby workers.',
       cta: 'Start Hiring',
-      icon: 'ðŸ‘¤',
+      icon: '👤',
       gradient: ['#667eea', '#764ba2'],
     },
     {
@@ -39,7 +39,7 @@ export function RoleSelectionScreen({ language, onChangeLanguage, onSelectRole }
       title: text.offerServices || 'I offer services',
       description: 'Create profile and get work from customers.',
       cta: 'Start Working',
-      icon: 'ðŸ”§',
+       icon: '🔧',
       gradient: ['#ff7e5f', '#feb47b'],
     },
   ];
@@ -48,7 +48,7 @@ export function RoleSelectionScreen({ language, onChangeLanguage, onSelectRole }
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.logo}>ðŸ’¼</Text>
+           <Text style={styles.logo}>💼</Text>
           <Text style={styles.appName}>{location.fullData?.address?.city}{text.badge}</Text>
 
           <LanguageSwitcher
