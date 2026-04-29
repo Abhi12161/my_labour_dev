@@ -1,5 +1,4 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-
 import { login, signup } from '../services/authService';
 
 const createInitialLoginForm = () => ({
@@ -79,7 +78,9 @@ export const submitAuth = createAsyncThunk(
         activeRole,
       };
     } catch (error) {
-      return rejectWithValue(error.message || 'Authentication failed.');
+      return rejectWithValue(
+        error.message || 'Authentication failed.'
+      );
     }
   }
 );
@@ -92,21 +93,31 @@ const authSlice = createSlice({
       state.authMode = action.payload;
       state.roleAuth[state.role].error = null;
     },
+
     toggleAuthMode: (state) => {
       state.authMode = state.authMode === 'login' ? 'signup' : 'login';
       state.roleAuth[state.role].error = null;
     },
+
     setRole: (state, action) => {
       state.role = action.payload;
     },
+
     updateLoginField: (state, action) => {
       const { field, value } = action.payload;
       state.roleAuth[state.role].loginForm[field] = value;
     },
+
     updateSignupField: (state, action) => {
       const { field, value } = action.payload;
       state.roleAuth[state.role].signupForm[field] = value;
     },
+
+    // 🔥 NEW: Custom error set करने के लिए
+    setError: (state, action) => {
+      state.roleAuth[state.role].error = action.payload;
+    },
+
     authenticateDemo: (state) => {
       state.session = {
         token: 'demo-session',
@@ -119,6 +130,7 @@ const authSlice = createSlice({
       };
       state.roleAuth[state.role].error = null;
     },
+
     logout: (state) => {
       state.session = null;
       state.role = 'customer';
@@ -128,31 +140,40 @@ const authSlice = createSlice({
         labour: createRoleAuthState(),
       };
     },
+
     clearAuthError: (state) => {
       state.roleAuth[state.role].error = null;
     },
   },
+
   extraReducers: (builder) => {
     builder
       .addCase(submitAuth.pending, (state) => {
         state.roleAuth[state.role].loading = true;
         state.roleAuth[state.role].error = null;
       })
+
       .addCase(submitAuth.fulfilled, (state, action) => {
         const completedRole = action.payload.activeRole;
+
         state.roleAuth[completedRole].loading = false;
         state.roleAuth[completedRole].loginForm = createInitialLoginForm();
         state.roleAuth[completedRole].signupForm = createInitialSignupForm();
+
         state.session = {
           token: action.payload.token,
           user: action.payload.user,
           role: action.payload.role,
         };
       })
+
       .addCase(submitAuth.rejected, (state, action) => {
         state.roleAuth[state.role].loading = false;
+
         state.roleAuth[state.role].error =
-          action.payload || action.error.message || 'Authentication failed.';
+          action.payload ||
+          action.error.message ||
+          'Authentication failed.';
       });
   },
 });
@@ -166,6 +187,7 @@ export const {
   toggleAuthMode,
   updateLoginField,
   updateSignupField,
+  setError, // 👈 IMPORTANT
 } = authSlice.actions;
 
 export default authSlice.reducer;

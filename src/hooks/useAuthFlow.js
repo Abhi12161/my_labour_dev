@@ -1,12 +1,11 @@
 import { useEffect } from 'react';
-import { Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { copy } from '../constants/copy';
 import {
   authenticateDemo,
   clearAuthError,
   setRole,
+  setError, // ✅ ADD THIS
   submitAuth,
   toggleAuthMode,
   updateLoginField,
@@ -14,9 +13,9 @@ import {
 } from '../store/authSlice';
 
 export function useAuthFlow(language, initialRole = 'customer') {
-  const text = copy[language];
   const dispatch = useDispatch();
   const { authMode, role, roleAuth, session } = useSelector((state) => state.auth);
+
   const activeRoleAuth = roleAuth[role];
   const { loading, loginForm, signupForm, error } = activeRoleAuth;
 
@@ -26,46 +25,42 @@ export function useAuthFlow(language, initialRole = 'customer') {
     }
   }, [dispatch, initialRole, role]);
 
+  // 🔥 STRONG VALIDATION FUNCTION
+  const isValidPhone = (phone) => {
+    return /^[0-9]{10}$/.test(phone);
+  };
+
   const submit = async () => {
     const activeForm = authMode === 'login' ? loginForm : signupForm;
-    const requiredFields =
-      authMode === 'login'
-        ? [activeForm.phone]
-        : [activeForm.name, activeForm.phone, activeForm.address];
 
-    if (requiredFields.some((value) => !value.trim())) {
-      Alert.alert(text.missingTitle, text.missingBody);
-      return;
+    dispatch(clearAuthError());
+
+    // ✅ Phone validation
+    if (!isValidPhone(activeForm.phone)) {
+      return dispatch(setError('Enter valid 10 digit mobile number'));
+    }
+
+    // ✅ Signup validation
+    if (authMode === 'signup') {
+      if (!activeForm.name.trim()) {
+        return dispatch(setError('Name is required'));
+      }
+
+      if (!activeForm.address.trim()) {
+        return dispatch(setError('Address is required'));
+      }
     }
 
     const result = await dispatch(submitAuth());
 
-    if (submitAuth.fulfilled.match(result)) {
-      Alert.alert(text.successTitle, authMode === 'login' ? text.loginSuccess : text.signupSuccess);
+    // ❌ API error already Redux me set ho jayega
+    if (!submitAuth.fulfilled.match(result)) {
       return;
     }
-
-    Alert.alert(text.errorTitle, result.payload || text.errorTitle);
   };
 
   const launchDemo = () => {
     dispatch(authenticateDemo());
-  };
-
-  const handleUpdateLoginField = (field, value) => {
-    dispatch(updateLoginField({ field, value }));
-  };
-
-  const handleUpdateSignupField = (field, value) => {
-    dispatch(updateSignupField({ field, value }));
-  };
-
-  const switchMode = () => {
-    dispatch(toggleAuthMode());
-  };
-
-  const handleSetRole = (nextRole) => {
-    dispatch(setRole(nextRole));
   };
 
   return {
@@ -76,12 +71,14 @@ export function useAuthFlow(language, initialRole = 'customer') {
     role,
     session,
     signupForm,
-    setRole: handleSetRole,
-    switchMode,
+    setRole: (r) => dispatch(setRole(r)),
+    switchMode: () => dispatch(toggleAuthMode()),
     submit,
     launchDemo,
-    updateLoginField: handleUpdateLoginField,
-    updateSignupField: handleUpdateSignupField,
+    updateLoginField: (field, value) =>
+      dispatch(updateLoginField({ field, value })),
+    updateSignupField: (field, value) =>
+      dispatch(updateSignupField({ field, value })),
     clearError: () => dispatch(clearAuthError()),
   };
 }

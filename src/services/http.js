@@ -1,28 +1,43 @@
 import { API_BASE_URL } from '../config/env';
 
 export async function apiRequest(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
-    ...options,
-  });
-
-  const raw = await response.text();
-  let data = {};
-
   try {
-    data = raw ? JSON.parse(raw) : {};
-  } catch (_error) {
-    data = {};
-  }
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+      },
+      ...options,
+    });
 
-  if (!response.ok) {
-    throw new Error(data.message || 'API request failed. Please check backend response.');
-  }
+    const raw = await response.text();
+    let data = {};
 
-  return data;
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch {
+      data = {};
+    }
+
+    // 🔥 Backend error handling
+    if (!response.ok) {
+      throw new Error(
+        data?.message || "Something went wrong"
+      );
+    }
+
+    return data;
+
+  } catch (error) {
+    // 🔥 Network / fetch error handling
+    if (error.message === 'Failed to fetch') {
+      throw new Error('Server not reachable');
+    }
+
+    throw new Error(
+      error.message || 'Something went wrong'
+    );
+  }
 }
 
 // Admin database storage functions

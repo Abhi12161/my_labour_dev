@@ -29,6 +29,8 @@ export function AuthScreen({
     launchDemo,
     updateLoginField,
     updateSignupField,
+    error,          // ✅ ADD
+    clearError,     // ✅ ADD
   } = useAuthFlow(language, preSelectedRole || 'customer');
 
   const isLogin = authMode === 'login';
@@ -36,11 +38,13 @@ export function AuthScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      
+      {/* 🔝 TOP */}
       <View style={styles.heroCard}>
         <View style={styles.topRow}>
           {(onBack || preSelectedRole) && (
             <Pressable onPress={onBack} style={styles.backBtn}>
-              <Text style={styles.backText}>â† {text.back}</Text>
+              <Text style={styles.backText}>← {text.back}</Text>
             </Pressable>
           )}
           <LanguageSwitcher selected={language} onChange={onChangeLanguage} />
@@ -55,26 +59,37 @@ export function AuthScreen({
         </Text>
       </View>
 
+      {/* 📄 FORM */}
       <View style={styles.formCard}>
+
         {showRoleSelector && (
           <RoleSelector copy={text} selectedRole={role} onChange={setRole} />
         )}
 
+        {/* 🔹 SIGNUP */}
         {!isLogin && (
           <>
             <FormInput
               label={text.fullName}
               placeholder={text.fullNamePlaceholder}
               value={signupForm.name}
-              onChangeText={(value) => updateSignupField('name', value)}
+              onChangeText={(value) => {
+                updateSignupField('name', value);
+                clearError();
+              }}
+              style={error ? { borderColor: 'red' } : null}
             />
 
             <FormInput
               label={text.address}
               placeholder={text.addressPlaceholder}
               value={signupForm.address}
-              onChangeText={(value) => updateSignupField('address', value)}
+              onChangeText={(value) => {
+                updateSignupField('address', value);
+                clearError();
+              }}
               multiline
+              style={error ? { borderColor: 'red' } : null}
             />
 
             <FormInput
@@ -82,37 +97,57 @@ export function AuthScreen({
               placeholder={text.phonePlaceholder}
               value={signupForm.phone}
               keyboardType="phone-pad"
-              onChangeText={(value) => updateSignupField('phone', value)}
+              onChangeText={(value) => {
+                updateSignupField('phone', value);
+                clearError();
+              }}
+              style={error ? { borderColor: 'red' } : null}
             />
           </>
         )}
 
+        {/* 🔹 LOGIN */}
         {isLogin && (
           <FormInput
             label={text.phone}
             placeholder={text.phonePlaceholder}
             value={loginForm.phone}
             keyboardType="phone-pad"
-            onChangeText={(value) => updateLoginField('phone', value)}
+            onChangeText={(value) => {
+              updateLoginField('phone', value);
+              clearError();
+            }}
+            style={error ? { borderColor: 'red' } : null}
           />
         )}
 
+        {/* 🔥 SUBMIT */}
         <PrimaryButton
           label={isLogin ? text.submitLogin : text.submitSignup}
           loading={loading}
           onPress={submit}
         />
 
+        {/* 🔴 ERROR MESSAGE */}
+        {error && (
+          <Text style={styles.errorText}>
+            ❌ {error}
+          </Text>
+        )}
+
+        {/* 🎯 DEMO */}
         <PrimaryButton
           label={text.demoButton}
           variant="ghost"
           onPress={launchDemo}
         />
 
+        {/* 🔁 SWITCH */}
         <Text style={styles.switchText} onPress={switchMode}>
           {isLogin ? text.switchToSignup : text.switchToLogin}
         </Text>
 
+        {/* 🌐 ENV */}
         <View style={styles.envBox}>
           <Text style={styles.envTitle}>{text.envTitle}</Text>
           <Text style={styles.envBody}>{text.envBody}</Text>

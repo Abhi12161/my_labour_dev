@@ -73,4 +73,11 @@ export const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '700',
   },
+  errorText: {
+  color: '#ff4d4f',
+  marginTop: 10,
+  fontSize: 14,
+  textAlign: 'center',
+  fontWeight: '500',
+}
 });
