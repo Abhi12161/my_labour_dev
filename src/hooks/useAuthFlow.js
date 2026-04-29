@@ -16,9 +16,9 @@ import {
 export function useAuthFlow(language, initialRole = 'customer') {
   const text = copy[language];
   const dispatch = useDispatch();
-  const { authMode, loading, loginForm, role, signupForm, session, error } = useSelector(
-    (state) => state.auth
-  );
+  const { authMode, role, roleAuth, session } = useSelector((state) => state.auth);
+  const activeRoleAuth = roleAuth[role];
+  const { loading, loginForm, signupForm, error } = activeRoleAuth;
 
   useEffect(() => {
     if (initialRole && role !== initialRole) {

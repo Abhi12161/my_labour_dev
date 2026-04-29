@@ -1,7 +1,7 @@
 import { apiRequest } from './http';
 
-export function signup(payload) {
-  return apiRequest('/labour/signup', {
+export function signup(role, payload) {
+  return apiRequest(`/${role}/signup`, {
     method: 'POST',
     body: JSON.stringify({
       name: payload.name,
@@ -11,8 +11,8 @@ export function signup(payload) {
   });
 }
 
-export function login(payload) {
-  return apiRequest('/labour/login', {
+export function login(role, payload) {
+  return apiRequest(`/${role}/login`, {
     method: 'POST',
     body: JSON.stringify({
       mobile: payload.phone,

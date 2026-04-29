@@ -2,52 +2,55 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import { login, signup } from '../services/authService';
 
-const initialLoginForm = {
+const createInitialLoginForm = () => ({
   phone: '',
-};
+});
 
-const initialSignupForm = {
+const createInitialSignupForm = () => ({
   name: '',
   phone: '',
   address: '',
-};
+});
 
-const createInitialLoginForm = () => ({ ...initialLoginForm });
-const createInitialSignupForm = () => ({ ...initialSignupForm });
+const createRoleAuthState = () => ({
+  loginForm: createInitialLoginForm(),
+  signupForm: createInitialSignupForm(),
+  loading: false,
+  error: null,
+});
 
 const initialState = {
   session: null,
   authMode: 'login',
   role: 'customer',
-  loginForm: createInitialLoginForm(),
-  signupForm: createInitialSignupForm(),
-  loading: false,
-  error: null,
+  roleAuth: {
+    customer: createRoleAuthState(),
+    labour: createRoleAuthState(),
+  },
 };
 
-const buildSession = ({ authMode, role, response, loginForm, signupForm }) => {
+const normalizeUser = ({ authMode, response, loginForm, signupForm }) => {
   const responseUser = response.user || {};
-  const fallbackUser =
-    authMode === 'login'
-      ? {
-          name: responseUser.name || response.name || 'User',
-          phone: responseUser.phone || responseUser.mobile || response.mobile || loginForm.phone || 'Not provided',
-          address: responseUser.address || response.address || 'Not provided',
-        }
-      : {
-          name: responseUser.name || signupForm.name,
-          phone: responseUser.phone || responseUser.mobile || signupForm.phone,
-          address: responseUser.address || signupForm.address,
-        };
+
+  if (authMode === 'login') {
+    return {
+      ...responseUser,
+      name: responseUser.name || response.name || 'User',
+      phone:
+        responseUser.phone ||
+        responseUser.mobile ||
+        response.mobile ||
+        loginForm.phone ||
+        'Not provided',
+      address: responseUser.address || response.address || 'Not provided',
+    };
+  }
 
   return {
-    token: response.token || '',
-    user: {
-      ...fallbackUser,
-      ...responseUser,
-      phone: fallbackUser.phone,
-    },
-    role: responseUser.role || response.role || role,
+    ...responseUser,
+    name: responseUser.name || signupForm.name,
+    phone: responseUser.phone || responseUser.mobile || signupForm.phone,
+    address: responseUser.address || signupForm.address,
   };
 };
 
@@ -56,18 +59,25 @@ export const submitAuth = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     try {
       const { auth } = getState();
+      const activeRole = auth.role;
+      const activeRoleState = auth.roleAuth[activeRole];
+
       const response =
         auth.authMode === 'login'
-          ? await login(auth.loginForm)
-          : await signup(auth.signupForm);
+          ? await login(activeRole, activeRoleState.loginForm)
+          : await signup(activeRole, activeRoleState.signupForm);
 
-      return buildSession({
-        authMode: auth.authMode,
-        role: auth.role,
-        response,
-        loginForm: auth.loginForm,
-        signupForm: auth.signupForm,
-      });
+      return {
+        token: response.token || '',
+        user: normalizeUser({
+          authMode: auth.authMode,
+          response,
+          loginForm: activeRoleState.loginForm,
+          signupForm: activeRoleState.signupForm,
+        }),
+        role: response.user?.role || response.role || activeRole,
+        activeRole,
+      };
     } catch (error) {
       return rejectWithValue(error.message || 'Authentication failed.');
     }
@@ -80,22 +90,22 @@ const authSlice = createSlice({
   reducers: {
     setAuthMode: (state, action) => {
       state.authMode = action.payload;
-      state.error = null;
+      state.roleAuth[state.role].error = null;
     },
     toggleAuthMode: (state) => {
       state.authMode = state.authMode === 'login' ? 'signup' : 'login';
-      state.error = null;
+      state.roleAuth[state.role].error = null;
     },
     setRole: (state, action) => {
       state.role = action.payload;
     },
     updateLoginField: (state, action) => {
       const { field, value } = action.payload;
-      state.loginForm[field] = value;
+      state.roleAuth[state.role].loginForm[field] = value;
     },
     updateSignupField: (state, action) => {
       const { field, value } = action.payload;
-      state.signupForm[field] = value;
+      state.roleAuth[state.role].signupForm[field] = value;
     },
     authenticateDemo: (state) => {
       state.session = {
@@ -107,35 +117,42 @@ const authSlice = createSlice({
         },
         role: state.role,
       };
-      state.error = null;
+      state.roleAuth[state.role].error = null;
     },
     logout: (state) => {
       state.session = null;
       state.role = 'customer';
       state.authMode = 'login';
-      state.loginForm = createInitialLoginForm();
-      state.signupForm = createInitialSignupForm();
-      state.error = null;
+      state.roleAuth = {
+        customer: createRoleAuthState(),
+        labour: createRoleAuthState(),
+      };
     },
     clearAuthError: (state) => {
-      state.error = null;
+      state.roleAuth[state.role].error = null;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(submitAuth.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.roleAuth[state.role].loading = true;
+        state.roleAuth[state.role].error = null;
       })
       .addCase(submitAuth.fulfilled, (state, action) => {
-        state.loading = false;
-        state.session = action.payload;
-        state.loginForm = createInitialLoginForm();
-        state.signupForm = createInitialSignupForm();
+        const completedRole = action.payload.activeRole;
+        state.roleAuth[completedRole].loading = false;
+        state.roleAuth[completedRole].loginForm = createInitialLoginForm();
+        state.roleAuth[completedRole].signupForm = createInitialSignupForm();
+        state.session = {
+          token: action.payload.token,
+          user: action.payload.user,
+          role: action.payload.role,
+        };
       })
       .addCase(submitAuth.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || action.error.message || 'Authentication failed.';
+        state.roleAuth[state.role].loading = false;
+        state.roleAuth[state.role].error =
+          action.payload || action.error.message || 'Authentication failed.';
       });
   },
 });
