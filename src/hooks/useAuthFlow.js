@@ -36,7 +36,7 @@ export function useAuthFlow(language, initialRole = 'customer') {
     dispatch(clearAuthError());
 
     // ✅ Phone validation
-    if (!isValidPhone(activeForm.phone)) {
+    if (!isValidPhone(activeForm.mobile)) {
       return dispatch(setError('Enter valid 10 digit mobile number'));
     }
 

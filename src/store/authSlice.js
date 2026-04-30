@@ -2,12 +2,12 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { login, signup } from '../services/authService';
 
 const createInitialLoginForm = () => ({
-  phone: '',
+  mobile: '',
 });
 
 const createInitialSignupForm = () => ({
   name: '',
-  phone: '',
+  mobile: '',
   address: '',
 });
 
@@ -35,11 +35,11 @@ const normalizeUser = ({ authMode, response, loginForm, signupForm }) => {
     return {
       ...responseUser,
       name: responseUser.name || response.name || 'User',
-      phone:
-        responseUser.phone ||
+      mobile:
         responseUser.mobile ||
+        responseUser.phone ||
         response.mobile ||
-        loginForm.phone ||
+        loginForm.mobile ||
         'Not provided',
       address: responseUser.address || response.address || 'Not provided',
     };
@@ -48,7 +48,7 @@ const normalizeUser = ({ authMode, response, loginForm, signupForm }) => {
   return {
     ...responseUser,
     name: responseUser.name || signupForm.name,
-    phone: responseUser.phone || responseUser.mobile || signupForm.phone,
+    mobile: responseUser.mobile || responseUser.phone || signupForm.mobile,
     address: responseUser.address || signupForm.address,
   };
 };
@@ -63,8 +63,8 @@ export const submitAuth = createAsyncThunk(
 
       const response =
         auth.authMode === 'login'
-          ? await login(activeRole, activeRoleState.loginForm)
-          : await signup(activeRole, activeRoleState.signupForm);
+          ? await login(activeRoleState.loginForm)
+          : await signup(activeRoleState.signupForm);
 
       return {
         token: response.token || '',
@@ -124,6 +124,7 @@ const authSlice = createSlice({
         user: {
           name: 'Rajan Kumar',
           phone: '9262980734',
+          mobile: '9262980734',
           address: 'Demo Address',
         },
         role: state.role,
@@ -162,7 +163,10 @@ const authSlice = createSlice({
 
         state.session = {
           token: action.payload.token,
-          user: action.payload.user,
+          user: {
+            ...action.payload.user,
+            phone: action.payload.user.mobile || action.payload.user.phone,
+          },
           role: action.payload.role,
         };
       })

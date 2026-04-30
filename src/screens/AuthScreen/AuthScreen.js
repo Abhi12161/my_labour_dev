@@ -95,10 +95,10 @@ export function AuthScreen({
             <FormInput
               label={text.phone}
               placeholder={text.phonePlaceholder}
-              value={signupForm.phone}
+              value={signupForm.mobile}
               keyboardType="phone-pad"
               onChangeText={(value) => {
-                updateSignupField('phone', value);
+                updateSignupField('mobile', value);
                 clearError();
               }}
               style={error ? { borderColor: 'red' } : null}
@@ -111,10 +111,10 @@ export function AuthScreen({
           <FormInput
             label={text.phone}
             placeholder={text.phonePlaceholder}
-            value={loginForm.phone}
+            value={loginForm.mobile}
             keyboardType="phone-pad"
             onChangeText={(value) => {
-              updateLoginField('phone', value);
+              updateLoginField('mobile', value);
               clearError();
             }}
             style={error ? { borderColor: 'red' } : null}
