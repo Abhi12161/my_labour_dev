@@ -1,5 +1,6 @@
-import { startTransition, useDeferredValue, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { Ionicons } from '@expo/vector-icons';
 import { FilterBar } from '../../components/FilterBar';
@@ -17,6 +18,7 @@ import {
   labourFilterOptions,
   popularSkills,
 } from '../../data/dashboardData';
+import { fetchProfile, saveProfile } from '../../store/profileSlice';
 import { filterJobs } from '../../utils/filterJobs';
 import { styles } from './styles';
 
@@ -35,10 +37,28 @@ export function CustomerDashboard({
   postedJobs,
   session,
 }) {
+  const dispatch = useDispatch();
   const text = copy[language];
+  const { data: apiProfile, status, updateStatus, error } = useSelector(
+    (state) => state.profile.customer
+  );
+  const profile = apiProfile || session?.user || {};
   const [filters, setFilters] = useState(initialFilters);
   const [jobModalVisible, setJobModalVisible] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editedProfile, setEditedProfile] = useState(profile);
   const deferredSearch = useDeferredValue(filters.search);
+
+  useEffect(() => {
+    if (
+      session?.token &&
+      session?.token !== 'demo-session' &&
+      session?.role === 'customer' &&
+      status === 'idle'
+    ) {
+      dispatch(fetchProfile('customer'));
+    }
+  }, [dispatch, session?.role, session?.token, status]);
 
   const filteredLabours = useMemo(() => {
     return filterJobs(availableLabours, {
@@ -78,6 +98,35 @@ export function CustomerDashboard({
     Alert.alert(text.jobPostedTitle, text.jobPostedBody);
   };
 
+  const handleSaveProfile = async () => {
+    const result = await dispatch(
+      saveProfile({
+        role: 'customer',
+        name: editedProfile.name || '',
+        mobile: editedProfile.mobile || editedProfile.phone || '',
+        address: editedProfile.address || '',
+        bio: editedProfile.bio || '',
+        profileImage: editedProfile.profileImage || '',
+      })
+    );
+
+    if (saveProfile.fulfilled.match(result)) {
+      setIsEditingProfile(false);
+      Alert.alert(text.profileUpdatedTitle, text.profileUpdatedMessage);
+      return;
+    }
+
+    Alert.alert('Error', result.payload || 'Failed to update profile.');
+  };
+
+  const handleToggleProfileEditor = () => {
+    if (!isEditingProfile) {
+      setEditedProfile(profile);
+    }
+
+    setIsEditingProfile((current) => !current);
+  };
+
   const customerStatStyles = {
     labours: { icon: 'people', gradient: ['#ff8d63', '#ffb25e'], trend: 'up' },
     jobs: { icon: 'people', gradient: ['#3ecf97', '#2563eb'], trend: 'down' },
@@ -86,6 +135,8 @@ export function CustomerDashboard({
     completed: { icon: 'checkmark-done', gradient: ['#22c1ff', '#2563eb'], trend: 'up' },
     pending: { icon: 'time', gradient: ['#ec4899', '#ff5f6d'], trend: 'down' },
   };
+
+  console.log('CustomerDashboard render', { profile, status, error });
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
@@ -107,7 +158,7 @@ export function CustomerDashboard({
         <View style={styles.heroBody}>
           <View style={styles.heroCopy}>
             <Text style={styles.heroHello}>{text.hello},</Text>
-            <Text style={styles.heroName}>{session?.user?.name || 'User'}</Text>
+            <Text style={styles.heroName}>{profile?.name || session?.user?.name || 'User'}</Text>
 
             <Text style={styles.heroSubtitle}>{text.customerSubtitle}</Text>
           </View>
@@ -115,7 +166,7 @@ export function CustomerDashboard({
           <View style={styles.heroAvatarWrap}>
             <View style={styles.heroAvatarCircle}>
               <Text style={styles.heroAvatarLetter}>
-                {(session?.user?.name || 'A').charAt(0).toUpperCase()}
+                {(profile?.name || session?.user?.name || 'A').charAt(0).toUpperCase()}
               </Text>
             </View>
             <View style={styles.heroAvatarEdit}>
@@ -127,13 +178,78 @@ export function CustomerDashboard({
         <View style={styles.contactCard}>
           <View style={styles.contactRow}>
             <Ionicons name="mail-outline" size={12} color="#ffffff" />
-            <Text style={styles.contactText}>{session?.user?.email}</Text>
+            <Text style={styles.contactText}>{profile?.email || session?.user?.email || 'Not provided'}</Text>
           </View>
           <View style={styles.contactRow}>
             <Ionicons name="call-outline" size={12} color="#ffffff" />
-            <Text style={styles.contactText}>{session?.user?.phone}</Text>
+            <Text style={styles.contactText}>
+              {profile?.mobile || profile?.phone || session?.user?.phone || 'Not provided'}
+            </Text>
           </View>
         </View>
+      </View>
+
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleWrap}>
+            <Ionicons name="person-outline" size={13} color="#0c5a49" />
+            <Text style={styles.sectionTitle}>Customer profile</Text>
+          </View>
+          <Pressable style={styles.countBadge} onPress={handleToggleProfileEditor}>
+            <Text style={styles.countBadgeText}>{isEditingProfile ? 'Close' : 'Edit'}</Text>
+          </Pressable>
+        </View>
+
+        {status === 'loading' ? <Text style={{ color: '#6b7c74' }}>Loading profile...</Text> : null}
+        {error ? <Text style={{ color: '#d14343' }}>{error}</Text> : null}
+
+        {isEditingProfile ? (
+          <View style={{ gap: 12 }}>
+            <TextInput
+              style={localStyles.input}
+              value={editedProfile.name || ''}
+              onChangeText={(value) => setEditedProfile((current) => ({ ...current, name: value }))}
+              placeholder="Name"
+            />
+            <TextInput
+              style={localStyles.input}
+              value={editedProfile.mobile || editedProfile.phone || ''}
+              onChangeText={(value) => setEditedProfile((current) => ({ ...current, mobile: value }))}
+              placeholder="Mobile"
+              keyboardType="phone-pad"
+            />
+            <TextInput
+              style={localStyles.input}
+              value={editedProfile.address || ''}
+              onChangeText={(value) => setEditedProfile((current) => ({ ...current, address: value }))}
+              placeholder="Address"
+            />
+            <TextInput
+              style={[localStyles.input, localStyles.multilineInput]}
+              value={editedProfile.bio || ''}
+              onChangeText={(value) => setEditedProfile((current) => ({ ...current, bio: value }))}
+              placeholder="Bio"
+              multiline
+            />
+            <TextInput
+              style={localStyles.input}
+              value={editedProfile.profileImage || ''}
+              onChangeText={(value) => setEditedProfile((current) => ({ ...current, profileImage: value }))}
+              placeholder="Profile image URL"
+            />
+            <Pressable style={localStyles.primaryAction} onPress={handleSaveProfile} disabled={updateStatus === 'loading'}>
+              <Text style={localStyles.primaryActionText}>
+                {updateStatus === 'loading' ? 'Saving...' : text.save}
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={{ gap: 8 }}>
+            <Text style={localStyles.profileLine}>{profile?.address || 'Address not added yet'}</Text>
+            <Text style={localStyles.profileLine}>{profile?.bio || 'Bio not added yet'}</Text>
+            <Text style={localStyles.profileLine}>{profile?.profileImage || 'Profile image URL not added yet'}</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.statsGrid}>
@@ -257,3 +373,33 @@ export function CustomerDashboard({
     </ScrollView>
   );
 }
+
+const localStyles = {
+  input: {
+    borderWidth: 1,
+    borderColor: '#d6e1dc',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: '#f7fbf9',
+    color: '#17332e',
+  },
+  multilineInput: {
+    minHeight: 90,
+    textAlignVertical: 'top',
+  },
+  primaryAction: {
+    backgroundColor: '#0c5a49',
+    borderRadius: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  primaryActionText: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  profileLine: {
+    color: '#35554d',
+    lineHeight: 20,
+  },
+};

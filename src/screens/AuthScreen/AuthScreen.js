@@ -35,6 +35,7 @@ export function AuthScreen({
 
   const isLogin = authMode === 'login';
   const showRoleSelector = !preSelectedRole;
+  const errorShellStyle = error ? { borderColor: '#ff4d4f' } : null;
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
@@ -77,7 +78,8 @@ export function AuthScreen({
                 updateSignupField('name', value);
                 clearError();
               }}
-              style={error ? { borderColor: 'red' } : null}
+              autoCapitalize="words"
+              shellStyle={errorShellStyle}
             />
 
             <FormInput
@@ -89,7 +91,8 @@ export function AuthScreen({
                 clearError();
               }}
               multiline
-              style={error ? { borderColor: 'red' } : null}
+              autoCapitalize="words"
+              shellStyle={errorShellStyle}
             />
 
             <FormInput
@@ -101,7 +104,31 @@ export function AuthScreen({
                 updateSignupField('mobile', value);
                 clearError();
               }}
-              style={error ? { borderColor: 'red' } : null}
+              shellStyle={errorShellStyle}
+            />
+
+            <FormInput
+              label="Bio"
+              placeholder="Tell us about your work or requirements"
+              value={signupForm.bio}
+              onChangeText={(value) => {
+                updateSignupField('bio', value);
+                clearError();
+              }}
+              multiline
+              autoCapitalize="sentences"
+              shellStyle={errorShellStyle}
+            />
+
+            <FormInput
+              label="Profile image URL"
+              placeholder="https://example.com/photo.jpg"
+              value={signupForm.profileImage}
+              onChangeText={(value) => {
+                updateSignupField('profileImage', value);
+                clearError();
+              }}
+              shellStyle={errorShellStyle}
             />
           </>
         )}
@@ -117,7 +144,7 @@ export function AuthScreen({
               updateLoginField('mobile', value);
               clearError();
             }}
-            style={error ? { borderColor: 'red' } : null}
+            shellStyle={errorShellStyle}
           />
         )}
 

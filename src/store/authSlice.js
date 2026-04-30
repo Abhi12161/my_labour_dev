@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+
 import { login, signup } from '../services/authService';
 
 const createInitialLoginForm = () => ({
@@ -9,6 +10,8 @@ const createInitialSignupForm = () => ({
   name: '',
   mobile: '',
   address: '',
+  bio: '',
+  profileImage: '',
 });
 
 const createRoleAuthState = () => ({
@@ -29,27 +32,31 @@ const initialState = {
 };
 
 const normalizeUser = ({ authMode, response, loginForm, signupForm }) => {
-  const responseUser = response.user || {};
-
-  if (authMode === 'login') {
-    return {
-      ...responseUser,
-      name: responseUser.name || response.name || 'User',
-      mobile:
-        responseUser.mobile ||
-        responseUser.phone ||
-        response.mobile ||
-        loginForm.mobile ||
-        'Not provided',
-      address: responseUser.address || response.address || 'Not provided',
-    };
-  }
+  const responseUser = response.user || response || {};
+  const fallbackMobile = authMode === 'login' ? loginForm.mobile : signupForm.mobile;
 
   return {
     ...responseUser,
-    name: responseUser.name || signupForm.name,
-    mobile: responseUser.mobile || responseUser.phone || signupForm.mobile,
-    address: responseUser.address || signupForm.address,
+    _id: responseUser._id || response._id,
+    id: responseUser._id || responseUser.id || response._id,
+    name: responseUser.name || response.name || signupForm.name || 'User',
+    mobile:
+      responseUser.mobile ||
+      responseUser.phone ||
+      response.mobile ||
+      fallbackMobile ||
+      'Not provided',
+    address:
+      responseUser.address ||
+      response.address ||
+      signupForm.address ||
+      'Not provided',
+    bio: responseUser.bio || response.bio || signupForm.bio || '',
+    profileImage:
+      responseUser.profileImage ||
+      response.profileImage ||
+      signupForm.profileImage ||
+      '',
   };
 };
 
@@ -61,10 +68,24 @@ export const submitAuth = createAsyncThunk(
       const activeRole = auth.role;
       const activeRoleState = auth.roleAuth[activeRole];
 
-      const response =
-        auth.authMode === 'login'
-          ? await login(activeRoleState.loginForm)
-          : await signup(activeRoleState.signupForm);
+      let response;
+
+      if (auth.authMode === 'login') {
+        response = await login(activeRole, activeRoleState.loginForm);
+      } else {
+        const createdUser = await signup(activeRole, activeRoleState.signupForm);
+        const loginResponse = await login(activeRole, {
+          mobile: activeRoleState.signupForm.mobile,
+        });
+
+        response = {
+          ...loginResponse,
+          user: {
+            ...loginResponse.user,
+            ...createdUser,
+          },
+        };
+      }
 
       return {
         token: response.token || '',
@@ -78,9 +99,7 @@ export const submitAuth = createAsyncThunk(
         activeRole,
       };
     } catch (error) {
-      return rejectWithValue(
-        error.message || 'Authentication failed.'
-      );
+      return rejectWithValue(error.message || 'Authentication failed.');
     }
   }
 );
@@ -113,7 +132,6 @@ const authSlice = createSlice({
       state.roleAuth[state.role].signupForm[field] = value;
     },
 
-    // 🔥 NEW: Custom error set करने के लिए
     setError: (state, action) => {
       state.roleAuth[state.role].error = action.payload;
     },
@@ -122,14 +140,33 @@ const authSlice = createSlice({
       state.session = {
         token: 'demo-session',
         user: {
-          name: 'Rajan Kumar',
-          phone: '9262980734',
-          mobile: '9262980734',
+          id: 'demo-user',
+          name: state.role === 'labour' ? 'Rajan Kumar' : 'Amit Sharma',
+          phone: state.role === 'labour' ? '9262980734' : '9123456789',
+          mobile: state.role === 'labour' ? '9262980734' : '9123456789',
           address: 'Demo Address',
+          bio: '',
+          profileImage: '',
         },
         role: state.role,
       };
       state.roleAuth[state.role].error = null;
+    },
+
+    updateSessionUser: (state, action) => {
+      if (!state.session) {
+        return;
+      }
+
+      state.session.user = {
+        ...state.session.user,
+        ...action.payload,
+        id: action.payload._id || action.payload.id || state.session.user.id,
+        phone:
+          action.payload.mobile ||
+          action.payload.phone ||
+          state.session.user.phone,
+      };
     },
 
     logout: (state) => {
@@ -173,7 +210,6 @@ const authSlice = createSlice({
 
       .addCase(submitAuth.rejected, (state, action) => {
         state.roleAuth[state.role].loading = false;
-
         state.roleAuth[state.role].error =
           action.payload ||
           action.error.message ||
@@ -188,10 +224,11 @@ export const {
   logout,
   setAuthMode,
   setRole,
+  setError,
   toggleAuthMode,
   updateLoginField,
+  updateSessionUser,
   updateSignupField,
-  setError, // 👈 IMPORTANT
 } = authSlice.actions;
 
 export default authSlice.reducer;

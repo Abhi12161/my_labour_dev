@@ -4,12 +4,14 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, radius } from '../theme/tokens';
 
 export function FormInput({
+  autoCapitalize = 'none',
   keyboardType,
   label,
   multiline,
   onChangeText,
   placeholder,
   secureTextEntry,
+  shellStyle,
   value,
 }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -18,8 +20,9 @@ export function FormInput({
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.inputShell}>
+      <View style={[styles.inputShell, shellStyle]}>
         <TextInput
+          autoCapitalize={autoCapitalize}
           keyboardType={keyboardType}
           multiline={multiline}
           onChangeText={onChangeText}
@@ -28,7 +31,6 @@ export function FormInput({
           secureTextEntry={isPassword && !showPassword}
           style={[styles.input, multiline ? styles.multilineInput : null]}
           value={value}
-          autoCapitalize="none"
         />
         {isPassword ? (
           <Pressable onPress={() => setShowPassword((current) => !current)}>

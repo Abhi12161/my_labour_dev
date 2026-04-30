@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,9 +25,15 @@ import {
 } from '../../data/dashboardData';
 import {
   saveJobApplication,
-  saveProfileUpdate,
   saveTodayWorkRequest,
 } from '../../services/http';
+import {
+  createSkill,
+  editSkill,
+  fetchProfile,
+  removeSkill,
+  saveProfile,
+} from '../../store/profileSlice';
 import { styles } from './styles';
 
 const skillEditorCopy = {
@@ -65,18 +72,36 @@ export function LabourDashboard({
   postedJobs,
   session,
 }) {
+  const dispatch = useDispatch();
   const text = copy[language];
   const editorText = skillEditorCopy[language] || skillEditorCopy.en;
-  const [profile, setProfile] = useState(labourProfile);
+  const { data: apiProfile, status, updateStatus, skillStatus, error, skillError } = useSelector(
+    (state) => state.profile.labour
+  );
+  const profile = apiProfile || labourProfile;
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingSkills, setIsEditingSkills] = useState(false);
   const [editedProfile, setEditedProfile] = useState(profile);
   const [notifications, setNotifications] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
-  const [draftSkills, setDraftSkills] = useState(profile.skills);
-  const [draftCertifications, setDraftCertifications] = useState(profile.certifications);
-  const [skillInput, setSkillInput] = useState('');
-  const [certificateInput, setCertificateInput] = useState('');
+  const [skillForm, setSkillForm] = useState({
+    skillId: null,
+    name: '',
+    experienceYears: '',
+    level: '',
+    notes: '',
+  });
+
+  useEffect(() => {
+    if (
+      session?.token &&
+      session?.token !== 'demo-session' &&
+      session?.role === 'labour' &&
+      status === 'idle'
+    ) {
+      dispatch(fetchProfile('labour'));
+    }
+  }, [dispatch, session?.role, session?.token, status]);
 
   useEffect(() => {
     if (isEditingProfile) {
@@ -84,15 +109,39 @@ export function LabourDashboard({
     }
   }, [isEditingProfile, profile]);
 
+  const normalizedSkills = Array.isArray(profile?.labour?.skills)
+    ? profile.labour.skills.map((skill) =>
+        typeof skill === 'string'
+          ? {
+              _id: skill,
+              name: skill,
+              experienceYears: '',
+              level: '',
+              notes: '',
+            }
+          : skill
+      )
+    : [];
+
   const handleSaveProfile = async () => {
-    try {
-      await saveProfileUpdate(editedProfile, session.user.id);
-      setProfile(editedProfile);
+    const result = await dispatch(
+      saveProfile({
+        role: 'labour',
+        name: editedProfile.name,
+        mobile: editedProfile.mobile || editedProfile.phone,
+        address: editedProfile.address || editedProfile.location,
+        bio: editedProfile.bio || editedProfile.title || '',
+        profileImage: editedProfile.profileImage || '',
+      })
+    );
+
+    if (saveProfile.fulfilled.match(result)) {
       setIsEditingProfile(false);
       Alert.alert(text.profileUpdatedTitle, text.profileUpdatedMessage);
-    } catch {
-      Alert.alert('Error', 'Failed to update profile.');
+      return;
     }
+
+    Alert.alert('Error', result.payload || 'Failed to update profile.');
   };
 
   const handleCancelEdit = () => {
@@ -101,80 +150,92 @@ export function LabourDashboard({
   };
 
   const handleStartSkillsEdit = () => {
-    setDraftSkills(profile.skills);
-    setDraftCertifications(profile.certifications);
-    setSkillInput('');
-    setCertificateInput('');
+    setSkillForm({
+      skillId: null,
+      name: '',
+      experienceYears: '',
+      level: '',
+      notes: '',
+    });
     setIsEditingSkills(true);
   };
 
-  const addUniqueItem = (value, setter, list) => {
-    const cleaned = value.trim();
-    if (!cleaned) {
-      return false;
-    }
-
-    const exists = list.some((item) => item.toLowerCase() === cleaned.toLowerCase());
-    if (exists) {
-      return false;
-    }
-
-    setter([...list, cleaned]);
-    return true;
-  };
-
-  const handleAddSkill = () => {
-    const added = addUniqueItem(skillInput, setDraftSkills, draftSkills);
-    if (added) {
-      setSkillInput('');
-    }
-  };
-
-  const handleAddCertificate = () => {
-    const added = addUniqueItem(certificateInput, setDraftCertifications, draftCertifications);
-    if (added) {
-      setCertificateInput('');
-    }
-  };
-
-  const handleRemoveSkill = (skillToRemove) => {
-    setDraftSkills((current) => current.filter((item) => item !== skillToRemove));
-  };
-
-  const handleRemoveCertification = (certificateToRemove) => {
-    setDraftCertifications((current) => current.filter((item) => item !== certificateToRemove));
+  const handleEditSkill = (skill) => {
+    setSkillForm({
+      skillId: skill._id,
+      name: skill.name || '',
+      experienceYears: skill.experienceYears ? String(skill.experienceYears) : '',
+      level: skill.level || '',
+      notes: skill.notes || '',
+    });
+    setIsEditingSkills(true);
   };
 
   const handleCancelSkillsEdit = () => {
-    setDraftSkills(profile.skills);
-    setDraftCertifications(profile.certifications);
-    setSkillInput('');
-    setCertificateInput('');
+    setSkillForm({
+      skillId: null,
+      name: '',
+      experienceYears: '',
+      level: '',
+      notes: '',
+    });
     setIsEditingSkills(false);
   };
 
   const handleSaveSkills = async () => {
-    const updatedProfile = {
-      ...profile,
-      skills: draftSkills,
-      certifications: draftCertifications,
-    };
-
-    try {
-      await saveProfileUpdate(updatedProfile, session.user.id);
-      setProfile(updatedProfile);
-      setEditedProfile((current) => ({
-        ...current,
-        skills: draftSkills,
-        certifications: draftCertifications,
-      }));
-      setIsEditingSkills(false);
-      setSkillInput('');
-      setCertificateInput('');
-      Alert.alert(text.profileUpdatedTitle, text.profileUpdatedMessage);
-    } catch {
-      Alert.alert('Error', 'Failed to update profile.');
+    if (!skillForm.name.trim()) {
+      Alert.alert('Error', 'Skill name is required.');
+      return;
     }
+
+    if (!skillForm.experienceYears.trim() || Number.isNaN(Number(skillForm.experienceYears))) {
+      Alert.alert('Error', 'Experience years must be a number.');
+      return;
+    }
+
+    if (!skillForm.level.trim()) {
+      Alert.alert('Error', 'Skill level is required.');
+      return;
+    }
+
+    const action = skillForm.skillId
+      ? editSkill({
+          skillId: skillForm.skillId,
+          name: skillForm.name.trim(),
+          experienceYears: skillForm.experienceYears,
+          level: skillForm.level.trim(),
+          notes: skillForm.notes.trim(),
+        })
+      : createSkill({
+          name: skillForm.name.trim(),
+          experienceYears: skillForm.experienceYears,
+          level: skillForm.level.trim(),
+          notes: skillForm.notes.trim(),
+        });
+
+    const result = await dispatch(action);
+
+    if (createSkill.fulfilled.match(result) || editSkill.fulfilled.match(result)) {
+      handleCancelSkillsEdit();
+      Alert.alert(text.profileUpdatedTitle, text.profileUpdatedMessage);
+      return;
+    }
+
+    Alert.alert('Error', result.payload || 'Failed to save skill.');
+  };
+
+  const handleDeleteSkill = async (skillId) => {
+    const result = await dispatch(removeSkill(skillId));
+
+    if (removeSkill.fulfilled.match(result)) {
+      Alert.alert('Success', 'Skill deleted successfully');
+      if (skillForm.skillId === skillId) {
+        handleCancelSkillsEdit();
+      }
+      return;
+    }
+
+    Alert.alert('Error', result.payload || 'Failed to delete skill.');
   };
 
   const handleApplyForJob = (job) => {
@@ -265,7 +326,7 @@ export function LabourDashboard({
       trend: 'down',
     },
   };
-
+ console.log('LabourDashboard render', { profile, status, error });
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.hero}>
@@ -286,7 +347,7 @@ export function LabourDashboard({
         <View style={styles.heroBody}>
           <View style={styles.heroCopy}>
             <Text style={styles.heroHello}>{text.hello},</Text>
-            <Text style={styles.heroName}>{session?.user?.name || 'User'}</Text>
+            <Text style={styles.heroName}>{profile?.labour?.name || session?.user?.name || 'User'}</Text>
 
             <Text style={styles.heroSubtitle}>{text.customerSubtitle}</Text>
           </View>
@@ -294,7 +355,7 @@ export function LabourDashboard({
           <View style={styles.heroAvatarWrap}>
             <View style={styles.heroAvatarCircle}>
               <Text style={styles.heroAvatarLetter}>
-                {(session?.user?.name || 'A').charAt(0).toUpperCase()}
+                {(profile?.labour?.name || session?.user?.name || 'A').charAt(0).toUpperCase()}
               </Text>
             </View>
             <View style={styles.heroAvatarEdit}>
@@ -305,15 +366,28 @@ export function LabourDashboard({
 
         <View style={styles.contactCard}>
           <View style={styles.contactRow}>
-            <Ionicons name="mail-outline" size={12} color="#ffffff" />
-            <Text style={styles.contactText}>{session?.user?.email}</Text>
+            <Ionicons name="call-outline" size={12} color="#ffffff" />
+            <Text style={styles.contactText}>{profile?.labour?.mobile || session?.user?.mobile}</Text>
           </View>
           <View style={styles.contactRow}>
-            <Ionicons name="call-outline" size={12} color="#ffffff" />
-            <Text style={styles.contactText}>{session?.user?.phone}</Text>
+            <Ionicons name="mail-outline" size={12} color="#ffffff" />
+            <Text style={styles.contactText}>{profile.labour?.address}</Text>
           </View>
+          
         </View>
       </View>
+
+      {status === 'loading' ? (
+        <View style={styles.detailCard}>
+          <Text style={styles.detailCardTitle}>Loading profile...</Text>
+        </View>
+      ) : null}
+
+      {error ? (
+        <View style={styles.detailCard}>
+          <Text style={styles.detailCardTitle}>{error}</Text>
+        </View>
+      ) : null}
 
       <View style={styles.statsGrid}>
         {labourOverviewStats.map((item) => (
@@ -397,28 +471,28 @@ export function LabourDashboard({
 
               <View style={styles.profileContentRow}>
                 <View style={styles.avatarCircle}>
-                  <Text style={styles.avatarLetter}>{profile.name?.charAt(0) || 'A'}</Text>
+                  <Text style={styles.avatarLetter}>{profile.labour?.name?.charAt(0) || 'A'}</Text>
                 </View>
 
                 <View style={styles.profileInfoBlock}>
-                  <Text style={styles.profileName}>{profile.name}</Text>
-                  <Text style={styles.profileWork}>{profile.title}</Text>
+                  <Text style={styles.profileName}>{profile.labour?.name}</Text>
+                  <Text style={styles.profileWork}>{profile.labour?.bio || profile.labour?.title}</Text>
 
                   <View style={styles.profileMetaRow}>
                     <View style={styles.profileMetaItem}>
                       <Ionicons name="location" size={10} color="#ff8d63" />
-                      <Text style={styles.profileMetaText}>{profile.location}</Text>
+                      <Text style={styles.profileMetaText}>{profile.labour?.address || profile.labour?.location}</Text>
                     </View>
 
                     <View style={styles.profileMetaItem}>
                       <Ionicons name="call" size={10} color="#ffffff" />
-                      <Text style={styles.profileMetaText}>{profile.phone}</Text>
+                      <Text style={styles.profileMetaText}>{profile.labour?.mobile || profile.labour?.phone}</Text>
                     </View>
 
                     <View style={styles.profileMetaItem}>
                       <Ionicons name="star" size={10} color="#f7c948" />
                       <Text style={styles.profileMetaText}>
-                        {profile.rating} ({profile.reviews})
+                        {profile.labour?.rating} ({profile.labour?.reviews})
                       </Text>
                     </View>
                   </View>
@@ -460,31 +534,40 @@ export function LabourDashboard({
                 />
                 <TextInput
                   style={styles.editInput}
-                  value={editedProfile.title}
-                  onChangeText={(value) => setEditedProfile((prev) => ({ ...prev, title: value }))}
-                  placeholder="Work"
+                  value={editedProfile.address || editedProfile.location}
+                  onChangeText={(value) => setEditedProfile((prev) => ({ ...prev, address: value }))}
+                  placeholder="Address"
                   placeholderTextColor="#b8d1cb"
                 />
                 <TextInput
                   style={styles.editInput}
-                  value={editedProfile.location}
-                  onChangeText={(value) => setEditedProfile((prev) => ({ ...prev, location: value }))}
-                  placeholder="Location"
-                  placeholderTextColor="#b8d1cb"
-                />
-                <TextInput
-                  style={styles.editInput}
-                  value={editedProfile.phone}
-                  onChangeText={(value) => setEditedProfile((prev) => ({ ...prev, phone: value }))}
+                  value={editedProfile.mobile || editedProfile.phone}
+                  onChangeText={(value) => setEditedProfile((prev) => ({ ...prev, mobile: value }))}
                   placeholder="Phone"
+                  placeholderTextColor="#b8d1cb"
+                />
+                <TextInput
+                  style={styles.editInput}
+                  value={editedProfile.bio || editedProfile.title || ''}
+                  onChangeText={(value) => setEditedProfile((prev) => ({ ...prev, bio: value }))}
+                  placeholder="Bio"
+                  placeholderTextColor="#b8d1cb"
+                />
+                <TextInput
+                  style={styles.editInput}
+                  value={editedProfile.profileImage || ''}
+                  onChangeText={(value) => setEditedProfile((prev) => ({ ...prev, profileImage: value }))}
+                  placeholder="Profile image URL"
                   placeholderTextColor="#b8d1cb"
                 />
               </View>
 
               <View style={styles.profileActionRow}>
-                <Pressable style={styles.profileActionLight} onPress={handleSaveProfile}>
+                <Pressable style={styles.profileActionLight} onPress={handleSaveProfile} disabled={updateStatus === 'loading'}>
                   <Ionicons name="save-outline" size={13} color="#0e5a49" />
-                  <Text style={styles.profileActionLightText}>{text.save}</Text>
+                  <Text style={styles.profileActionLightText}>
+                    {updateStatus === 'loading' ? 'Saving...' : text.save}
+                  </Text>
                 </Pressable>
 
                 <Pressable style={styles.profileActionDark} onPress={handleCancelEdit}>
@@ -516,80 +599,73 @@ export function LabourDashboard({
           <View style={styles.skillEditorWrap}>
             <Text style={styles.detailCardHint}>{editorText.removeHint}</Text>
 
-            <View style={styles.editorInputRow}>
-              <TextInput
-                style={styles.editorInput}
-                value={skillInput}
-                onChangeText={setSkillInput}
-                placeholder={editorText.skillPlaceholder}
-                placeholderTextColor="#7e8b84"
-              />
-              <Pressable style={styles.editorAddButton} onPress={handleAddSkill}>
-                <Text style={styles.editorAddButtonText}>{editorText.addSkill}</Text>
-              </Pressable>
-            </View>
+            <TextInput
+              style={styles.editorInput}
+              value={skillForm.name}
+              onChangeText={(value) => setSkillForm((current) => ({ ...current, name: value }))}
+              placeholder={editorText.skillPlaceholder}
+              placeholderTextColor="#7e8b84"
+            />
+            <TextInput
+              style={styles.editorInput}
+              value={skillForm.experienceYears}
+              onChangeText={(value) => setSkillForm((current) => ({ ...current, experienceYears: value }))}
+              placeholder="Experience years"
+              keyboardType="numeric"
+              placeholderTextColor="#7e8b84"
+            />
+            <TextInput
+              style={styles.editorInput}
+              value={skillForm.level}
+              onChangeText={(value) => setSkillForm((current) => ({ ...current, level: value }))}
+              placeholder="Level"
+              placeholderTextColor="#7e8b84"
+            />
+            <TextInput
+              style={styles.editorInput}
+              value={skillForm.notes}
+              onChangeText={(value) => setSkillForm((current) => ({ ...current, notes: value }))}
+              placeholder="Notes"
+              multiline
+              placeholderTextColor="#7e8b84"
+            />
 
-            <View style={styles.detailChipRow}>
-              {draftSkills.map((skill, index) => (
-                <Pressable key={skill} style={styles.detailChip} onPress={() => handleRemoveSkill(skill)}>
-                  <Ionicons
-                    name={index % 2 === 0 ? 'hammer-outline' : 'briefcase-outline'}
-                    size={12}
-                    color="#0c5a49"
-                  />
-                  <Text style={styles.detailChipText}>{skill}</Text>
-                  <Ionicons name="close" size={11} color="#0c5a49" />
-                </Pressable>
-              ))}
-            </View>
-
-            <View style={styles.editorInputRow}>
-              <TextInput
-                style={styles.editorInput}
-                value={certificateInput}
-                onChangeText={setCertificateInput}
-                placeholder={editorText.certificatePlaceholder}
-                placeholderTextColor="#7e8b84"
-              />
-              <Pressable style={styles.editorAddButton} onPress={handleAddCertificate}>
-                <Text style={styles.editorAddButtonText}>{editorText.addCertificate}</Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.detailChipRow}>
-              {draftCertifications.map((certificate) => (
-                <Pressable
-                  key={certificate}
-                  style={styles.detailChip}
-                  onPress={() => handleRemoveCertification(certificate)}
-                >
-                  <Ionicons name="ribbon-outline" size={12} color="#0c5a49" />
-                  <Text style={styles.detailChipText}>{certificate}</Text>
-                  <Ionicons name="close" size={11} color="#0c5a49" />
-                </Pressable>
-              ))}
-            </View>
+            {skillError ? <Text style={styles.detailCardHint}>{skillError}</Text> : null}
 
             <View style={styles.editorActionRow}>
               <Pressable style={styles.editorSecondaryButton} onPress={handleCancelSkillsEdit}>
                 <Text style={styles.editorSecondaryButtonText}>{editorText.cancelSkills}</Text>
               </Pressable>
-              <Pressable style={styles.editorPrimaryButton} onPress={handleSaveSkills}>
-                <Text style={styles.editorPrimaryButtonText}>{editorText.saveSkills}</Text>
+              <Pressable style={styles.editorPrimaryButton} onPress={handleSaveSkills} disabled={skillStatus === 'loading'}>
+                <Text style={styles.editorPrimaryButtonText}>
+                  {skillStatus === 'loading'
+                    ? 'Saving...'
+                    : skillForm.skillId
+                      ? 'Update skill'
+                      : editorText.saveSkills}
+                </Text>
               </Pressable>
             </View>
           </View>
         ) : (
           <View style={styles.detailChipRow}>
-            {[...profile.skills, ...profile.certifications].map((skill, index) => (
-              <View key={skill} style={styles.detailChip}>
+            {normalizedSkills.map((skill, index) => (
+              <Pressable key={skill._id || skill.name} style={styles.detailChip} onPress={() => handleEditSkill(skill)}>
                 <Ionicons
                   name={index % 2 === 0 ? 'hammer-outline' : 'briefcase-outline'}
                   size={12}
                   color="#0c5a49"
                 />
-                <Text style={styles.detailChipText}>{skill}</Text>
-              </View>
+                <Text style={styles.detailChipText}>
+                  {skill.name}
+                  {skill.level ? ` • ${skill.level}` : ''}
+                </Text>
+                {skill._id ? (
+                  <Pressable onPress={() => handleDeleteSkill(skill._id)}>
+                    <Ionicons name="trash-outline" size={12} color="#0c5a49" />
+                  </Pressable>
+                ) : null}
+              </Pressable>
             ))}
           </View>
         )}
@@ -604,7 +680,7 @@ export function LabourDashboard({
         </View>
 
         <View style={styles.preferenceMetaRow}>
-          {profile.preferences.map((item, index) => (
+          {(profile.preferences || labourProfile.preferences).map((item, index) => (
             <View key={item} style={styles.preferenceMetaItem}>
               <Ionicons
                 name={
