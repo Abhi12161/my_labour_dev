@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View
+  View,
 } from 'react-native';
 
 import { colors } from '../theme/tokens';
@@ -57,17 +57,18 @@ export function JobPostModal({
   onClose,
   onSubmit,
   options,
+  submitting = false,
   visible,
 }) {
   const [form, setForm] = useState(initialForm);
-
-  // 🔥 NEW (date picker state)
   const [showPicker, setShowPicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
     if (visible) {
       setForm(initialForm);
+      setShowPicker(false);
+      setSelectedDate(new Date());
     }
   }, [visible]);
 
@@ -75,9 +76,15 @@ export function JobPostModal({
     setForm((current) => ({ ...current, [field]: value }));
   };
 
+  const handleClose = () => {
+    setForm(initialForm);
+    setShowPicker(false);
+    setSelectedDate(new Date());
+    onClose();
+  };
+
   const submit = () => {
     onSubmit(form);
-    setForm(initialForm);
   };
 
   return (
@@ -85,15 +92,13 @@ export function JobPostModal({
       animationType="slide"
       transparent
       visible={visible}
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
         <View style={styles.sheet}>
-          
-          {/* HEADER */}
           <View style={styles.header}>
             <Text style={styles.title}>{copy.postJobTitle}</Text>
-            <Pressable onPress={onClose} style={styles.closeButton}>
+            <Pressable onPress={handleClose} style={styles.closeButton}>
               <Text style={styles.closeLabel}>{copy.close}</Text>
             </Pressable>
           </View>
@@ -102,7 +107,6 @@ export function JobPostModal({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.content}
           >
-            {/* TITLE */}
             <View style={styles.group}>
               <Text style={styles.label}>{copy.jobTitle}</Text>
               <TextInput
@@ -114,7 +118,6 @@ export function JobPostModal({
               />
             </View>
 
-            {/* SKILL */}
             <OptionGroup
               label={copy.requiredSkill}
               options={options.skills}
@@ -122,22 +125,18 @@ export function JobPostModal({
               onChange={(value) => updateField('skill', value)}
             />
 
-            {/* DESCRIPTION */}
             <View style={styles.group}>
               <Text style={styles.label}>{copy.description}</Text>
               <TextInput
                 multiline
                 style={[styles.input, styles.textarea]}
                 value={form.description}
-                onChangeText={(value) =>
-                  updateField('description', value)
-                }
+                onChangeText={(value) => updateField('description', value)}
                 placeholder={copy.descriptionPlaceholder}
                 placeholderTextColor={colors.textMuted}
               />
             </View>
 
-            {/* CITY */}
             <OptionGroup
               label={copy.locationLabel}
               options={options.cities}
@@ -145,7 +144,6 @@ export function JobPostModal({
               onChange={(value) => updateField('city', value)}
             />
 
-            {/* DATE / TIME */}
             <OptionGroup
               label={copy.dateTime}
               options={options.timings}
@@ -159,7 +157,6 @@ export function JobPostModal({
               }}
             />
 
-            {/* 🔥 DATE PICKER */}
             {showPicker && (
               <DateTimePicker
                 value={selectedDate}
@@ -170,16 +167,12 @@ export function JobPostModal({
 
                   if (date) {
                     setSelectedDate(date);
-                    updateField(
-                      'timing',
-                      date.toDateString()
-                    );
+                    updateField('timing', date.toDateString());
                   }
                 }}
               />
             )}
 
-            {/* LEVEL */}
             <OptionGroup
               label={copy.skillLevel}
               options={options.levels}
@@ -191,6 +184,7 @@ export function JobPostModal({
           <PrimaryButton
             label={copy.postJobButton}
             onPress={submit}
+            loading={submitting}
           />
         </View>
       </View>
@@ -213,7 +207,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 24,
     gap: 16,
-
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 12,

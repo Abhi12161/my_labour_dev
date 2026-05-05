@@ -18,6 +18,7 @@ import {
   labourFilterOptions,
   popularSkills,
 } from '../../data/dashboardData';
+import { createJob, fetchJobs } from '../../services/jobService';
 import { fetchProfile, saveProfile } from '../../store/profileSlice';
 import { filterJobs } from '../../utils/filterJobs';
 import { styles } from './styles';
@@ -45,6 +46,10 @@ export function CustomerDashboard({
   const profile = apiProfile || session?.user || {};
   const [filters, setFilters] = useState(initialFilters);
   const [jobModalVisible, setJobModalVisible] = useState(false);
+  const [jobs, setJobs] = useState(postedJobs);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [jobsError, setJobsError] = useState('');
+  const [isSubmittingJob, setIsSubmittingJob] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editedProfile, setEditedProfile] = useState(profile);
   const deferredSearch = useDeferredValue(filters.search);
@@ -59,6 +64,41 @@ export function CustomerDashboard({
       dispatch(fetchProfile('customer'));
     }
   }, [dispatch, session?.role, session?.token, status]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadJobs = async () => {
+      setJobsLoading(true);
+      setJobsError('');
+
+      try {
+        const fetchedJobs = await fetchJobs(
+          session?.token && session.token !== 'demo-session'
+            ? session.token
+            : undefined
+        );
+
+        if (isMounted) {
+          setJobs(fetchedJobs);
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setJobsError(loadError.message || 'Failed to load jobs.');
+        }
+      } finally {
+        if (isMounted) {
+          setJobsLoading(false);
+        }
+      }
+    };
+
+    loadJobs();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session?.token]);
 
   const filteredLabours = useMemo(() => {
     return filterJobs(availableLabours, {
@@ -79,23 +119,39 @@ export function CustomerDashboard({
     });
   };
 
-  const handlePostJob = (form) => {
-    const createdJob = {
-      id: `post-${Date.now()}`,
-      title: form.title || text.jobTitlePlaceholder,
-      location: `${form.city}, Muzaffarpur`,
-      posted: text.today,
-      applicants: 0,
-      distance: 'Nearby',
-      description: form.description || text.descriptionPlaceholder,
+  const handlePostJob = async (form) => {
+    setIsSubmittingJob(true);
+    setJobsError('');
+
+    const token =
+      session?.token && session.token !== 'demo-session'
+        ? session.token
+        : undefined;
+
+    const payload = {
+      title: form.title?.trim() || text.jobTitlePlaceholder,
       skill: form.skill,
-      skillLevel: form.level,
-      time: form.timing,
+      description: form.description?.trim() || text.descriptionPlaceholder,
+      city: form.city,
+      timing: form.timing,
+      level: form.level,
     };
 
-    onPostJob(createdJob);
-    setJobModalVisible(false);
-    Alert.alert(text.jobPostedTitle, text.jobPostedBody);
+    try {
+      const createdJob = await createJob(payload, token);
+      const refreshedJobs = await fetchJobs(token);
+
+      setJobs(refreshedJobs.length ? refreshedJobs : [createdJob, ...jobs]);
+      if (!token) {
+        onPostJob(createdJob);
+      }
+      setJobModalVisible(false);
+      Alert.alert(text.jobPostedTitle, text.jobPostedBody);
+    } catch (submitError) {
+      Alert.alert('Error', submitError.message || 'Failed to post job.');
+    } finally {
+      setIsSubmittingJob(false);
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -331,9 +387,16 @@ export function CustomerDashboard({
         </View>
 
         <View style={styles.jobsList}>
-          {postedJobs.map((job) => (
-            <JobCard key={job.id} copy={text} job={job} />
-          ))}
+          {jobsLoading ? <Text style={{ color: '#6b7c74' }}>Loading jobs...</Text> : null}
+          {jobsError ? <Text style={{ color: '#d14343' }}>{jobsError}</Text> : null}
+          {!jobsLoading && jobs.length
+            ? jobs.map((job) => <JobCard key={job.id} copy={text} job={job} />)
+            : null}
+          {!jobsLoading && !jobs.length ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>No jobs found.</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -369,6 +432,7 @@ export function CustomerDashboard({
         visible={jobModalVisible}
         onClose={() => setJobModalVisible(false)}
         onSubmit={handlePostJob}
+        submitting={isSubmittingJob}
       />
     </ScrollView>
   );
