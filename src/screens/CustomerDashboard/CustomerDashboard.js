@@ -31,6 +31,18 @@ const initialFilters = {
   rating: 'All',
 };
 
+const getCustomerProfile = (profile, sessionUser) => {
+  if (profile?.customer) {
+    return profile.customer;
+  }
+
+  if (profile && Object.keys(profile).length) {
+    return profile;
+  }
+
+  return sessionUser || {};
+};
+
 export function CustomerDashboard({
   language,
   onLogout,
@@ -44,6 +56,7 @@ export function CustomerDashboard({
     (state) => state.profile.customer
   );
   const profile = apiProfile || session?.user || {};
+  const customerProfile = getCustomerProfile(profile, session?.user);
   const [filters, setFilters] = useState(initialFilters);
   const [jobModalVisible, setJobModalVisible] = useState(false);
   const [jobs, setJobs] = useState(postedJobs);
@@ -51,7 +64,7 @@ export function CustomerDashboard({
   const [jobsError, setJobsError] = useState('');
   const [isSubmittingJob, setIsSubmittingJob] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [editedProfile, setEditedProfile] = useState(profile);
+  const [editedProfile, setEditedProfile] = useState(customerProfile);
   const deferredSearch = useDeferredValue(filters.search);
 
   useEffect(() => {
@@ -100,6 +113,12 @@ export function CustomerDashboard({
     };
   }, [session?.token]);
 
+  useEffect(() => {
+    if (isEditingProfile) {
+      setEditedProfile(customerProfile);
+    }
+  }, [customerProfile, isEditingProfile]);
+
   const filteredLabours = useMemo(() => {
     return filterJobs(availableLabours, {
       ...filters,
@@ -133,6 +152,7 @@ export function CustomerDashboard({
       skill: form.skill,
       description: form.description?.trim() || text.descriptionPlaceholder,
       city: form.city,
+      location: form.city,
       timing: form.timing,
       level: form.level,
     };
@@ -158,11 +178,11 @@ export function CustomerDashboard({
     const result = await dispatch(
       saveProfile({
         role: 'customer',
-        name: editedProfile.name || '',
-        mobile: editedProfile.mobile || editedProfile.phone || '',
-        address: editedProfile.address || '',
-        bio: editedProfile.bio || '',
-        profileImage: editedProfile.profileImage || '',
+        name: editedProfile.name || customerProfile.name || '',
+        mobile: editedProfile.mobile || editedProfile.phone || customerProfile.mobile || customerProfile.phone || '',
+        address: editedProfile.address || customerProfile.address || '',
+        bio: editedProfile.bio || customerProfile.bio || '',
+        profileImage: editedProfile.profileImage || customerProfile.profileImage || '',
       })
     );
 
@@ -177,7 +197,7 @@ export function CustomerDashboard({
 
   const handleToggleProfileEditor = () => {
     if (!isEditingProfile) {
-      setEditedProfile(profile);
+      setEditedProfile(customerProfile);
     }
 
     setIsEditingProfile((current) => !current);
@@ -214,7 +234,7 @@ export function CustomerDashboard({
         <View style={styles.heroBody}>
           <View style={styles.heroCopy}>
             <Text style={styles.heroHello}>{text.hello},</Text>
-            <Text style={styles.heroName}>{profile?.name || session?.user?.name || 'User'}</Text>
+            <Text style={styles.heroName}>{customerProfile?.name || session?.user?.name || 'User'}</Text>
 
             <Text style={styles.heroSubtitle}>{text.customerSubtitle}</Text>
           </View>
@@ -222,7 +242,7 @@ export function CustomerDashboard({
           <View style={styles.heroAvatarWrap}>
             <View style={styles.heroAvatarCircle}>
               <Text style={styles.heroAvatarLetter}>
-                {(profile?.name || session?.user?.name || 'A').charAt(0).toUpperCase()}
+                {(customerProfile?.name || session?.user?.name || 'A').charAt(0).toUpperCase()}
               </Text>
             </View>
             <View style={styles.heroAvatarEdit}>
@@ -234,12 +254,14 @@ export function CustomerDashboard({
         <View style={styles.contactCard}>
           <View style={styles.contactRow}>
             <Ionicons name="mail-outline" size={12} color="#ffffff" />
-            <Text style={styles.contactText}>{profile?.email || session?.user?.email || 'Not provided'}</Text>
+            <Text style={styles.contactText}>
+              {customerProfile?.email || session?.user?.email || 'Not provided'}
+            </Text>
           </View>
           <View style={styles.contactRow}>
             <Ionicons name="call-outline" size={12} color="#ffffff" />
             <Text style={styles.contactText}>
-              {profile?.mobile || profile?.phone || session?.user?.phone || 'Not provided'}
+              {customerProfile?.mobile || customerProfile?.phone || session?.user?.phone || 'Not provided'}
             </Text>
           </View>
         </View>
@@ -301,9 +323,11 @@ export function CustomerDashboard({
           </View>
         ) : (
           <View style={{ gap: 8 }}>
-            <Text style={localStyles.profileLine}>{profile?.address || 'Address not added yet'}</Text>
-            <Text style={localStyles.profileLine}>{profile?.bio || 'Bio not added yet'}</Text>
-            <Text style={localStyles.profileLine}>{profile?.profileImage || 'Profile image URL not added yet'}</Text>
+            <Text style={localStyles.profileLine}>{customerProfile?.address || 'Address not added yet'}</Text>
+            <Text style={localStyles.profileLine}>{customerProfile?.bio || 'Bio not added yet'}</Text>
+            <Text style={localStyles.profileLine}>
+              {customerProfile?.profileImage || 'Profile image URL not added yet'}
+            </Text>
           </View>
         )}
       </View>

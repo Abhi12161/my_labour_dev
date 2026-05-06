@@ -27,6 +27,7 @@ import {
   saveJobApplication,
   saveTodayWorkRequest,
 } from '../../services/http';
+import { fetchJobs } from '../../services/jobService';
 import {
   createSkill,
   editSkill,
@@ -66,6 +67,47 @@ const skillEditorCopy = {
   },
 };
 
+const normalizeLocationValue = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9,\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const getLocationTokens = (value) =>
+  normalizeLocationValue(value)
+    .split(',')
+    .flatMap((part) => part.split(' '))
+    .map((part) => part.trim())
+    .filter((part) => part.length > 2);
+
+const isMatchingLocation = (jobLocation, labourLocation) => {
+  const normalizedJobLocation = normalizeLocationValue(jobLocation);
+  const labourTokens = getLocationTokens(labourLocation);
+
+  if (!normalizedJobLocation || !labourTokens.length) {
+    return false;
+  }
+
+  return labourTokens.some((token) => normalizedJobLocation.includes(token));
+};
+
+const getLabourProfile = (profile, sessionUser, sessionToken) => {
+  if (profile?.labour) {
+    return profile.labour;
+  }
+
+  if (profile && Object.keys(profile).length) {
+    return profile;
+  }
+
+  if (sessionUser && Object.keys(sessionUser).length) {
+    return sessionUser;
+  }
+
+  return sessionToken === 'demo-session' ? labourProfile : {};
+};
+
 export function LabourDashboard({
   language,
   onLogout,
@@ -78,12 +120,16 @@ export function LabourDashboard({
   const { data: apiProfile, status, updateStatus, skillStatus, error, skillError } = useSelector(
     (state) => state.profile.labour
   );
-  const profile = apiProfile || labourProfile;
+  const profile = apiProfile || session?.user || {};
+  const labourAccountProfile = getLabourProfile(profile, session?.user, session?.token);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingSkills, setIsEditingSkills] = useState(false);
-  const [editedProfile, setEditedProfile] = useState(profile);
+  const [editedProfile, setEditedProfile] = useState(labourAccountProfile);
   const [notifications, setNotifications] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
+  const [jobs, setJobs] = useState(postedJobs || []);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [jobsError, setJobsError] = useState('');
   const [skillForm, setSkillForm] = useState({
     skillId: null,
     name: '',
@@ -105,12 +151,54 @@ export function LabourDashboard({
 
   useEffect(() => {
     if (isEditingProfile) {
-      setEditedProfile(profile);
+      setEditedProfile(labourAccountProfile);
     }
-  }, [isEditingProfile, profile]);
+  }, [isEditingProfile, labourAccountProfile]);
 
-  const normalizedSkills = Array.isArray(profile?.labour?.skills)
-    ? profile.labour.skills.map((skill) =>
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadJobs = async () => {
+      const shouldUseApiJobs =
+        Boolean(session?.token) && session.token !== 'demo-session';
+
+      if (!shouldUseApiJobs) {
+        setJobs(postedJobs || []);
+        setJobsError('');
+        setJobsLoading(false);
+        return;
+      }
+
+      setJobsLoading(true);
+      setJobsError('');
+
+      try {
+        const fetchedJobs = await fetchJobs(session.token);
+
+        if (isMounted) {
+          setJobs(fetchedJobs);
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setJobsError(loadError.message || 'Failed to load jobs.');
+          setJobs([]);
+        }
+      } finally {
+        if (isMounted) {
+          setJobsLoading(false);
+        }
+      }
+    };
+
+    loadJobs();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [postedJobs, session?.token]);
+
+  const normalizedSkills = Array.isArray(labourAccountProfile?.skills)
+    ? labourAccountProfile.skills.map((skill) =>
         typeof skill === 'string'
           ? {
               _id: skill,
@@ -122,6 +210,14 @@ export function LabourDashboard({
           : skill
       )
     : [];
+
+  const labourLocation =
+    labourAccountProfile?.address ||
+    labourAccountProfile?.location ||
+    session?.user?.address ||
+    '';
+
+  const matchedJobs = jobs.filter((job) => isMatchingLocation(job.location || job.city, labourLocation));
 
   const handleSaveProfile = async () => {
     const result = await dispatch(
@@ -145,7 +241,7 @@ export function LabourDashboard({
   };
 
   const handleCancelEdit = () => {
-    setEditedProfile(profile);
+    setEditedProfile(labourAccountProfile);
     setIsEditingProfile(false);
   };
 
@@ -347,7 +443,7 @@ export function LabourDashboard({
         <View style={styles.heroBody}>
           <View style={styles.heroCopy}>
             <Text style={styles.heroHello}>{text.hello},</Text>
-            <Text style={styles.heroName}>{profile?.labour?.name || session?.user?.name || 'User'}</Text>
+            <Text style={styles.heroName}>{labourAccountProfile?.name || session?.user?.name || 'User'}</Text>
 
             <Text style={styles.heroSubtitle}>{text.customerSubtitle}</Text>
           </View>
@@ -355,7 +451,7 @@ export function LabourDashboard({
           <View style={styles.heroAvatarWrap}>
             <View style={styles.heroAvatarCircle}>
               <Text style={styles.heroAvatarLetter}>
-                {(profile?.labour?.name || session?.user?.name || 'A').charAt(0).toUpperCase()}
+                {(labourAccountProfile?.name || session?.user?.name || 'A').charAt(0).toUpperCase()}
               </Text>
             </View>
             <View style={styles.heroAvatarEdit}>
@@ -367,11 +463,11 @@ export function LabourDashboard({
         <View style={styles.contactCard}>
           <View style={styles.contactRow}>
             <Ionicons name="call-outline" size={12} color="#ffffff" />
-            <Text style={styles.contactText}>{profile?.labour?.mobile || session?.user?.mobile}</Text>
+            <Text style={styles.contactText}>{labourAccountProfile?.mobile || session?.user?.mobile}</Text>
           </View>
           <View style={styles.contactRow}>
             <Ionicons name="mail-outline" size={12} color="#ffffff" />
-            <Text style={styles.contactText}>{profile.labour?.address}</Text>
+            <Text style={styles.contactText}>{labourAccountProfile?.address || labourAccountProfile?.location}</Text>
           </View>
           
         </View>
@@ -471,28 +567,28 @@ export function LabourDashboard({
 
               <View style={styles.profileContentRow}>
                 <View style={styles.avatarCircle}>
-                  <Text style={styles.avatarLetter}>{profile.labour?.name?.charAt(0) || 'A'}</Text>
+                  <Text style={styles.avatarLetter}>{labourAccountProfile?.name?.charAt(0) || 'A'}</Text>
                 </View>
 
                 <View style={styles.profileInfoBlock}>
-                  <Text style={styles.profileName}>{profile.labour?.name}</Text>
-                  <Text style={styles.profileWork}>{profile.labour?.bio || profile.labour?.title}</Text>
+                  <Text style={styles.profileName}>{labourAccountProfile?.name}</Text>
+                  <Text style={styles.profileWork}>{labourAccountProfile?.bio || labourAccountProfile?.title}</Text>
 
                   <View style={styles.profileMetaRow}>
                     <View style={styles.profileMetaItem}>
                       <Ionicons name="location" size={10} color="#ff8d63" />
-                      <Text style={styles.profileMetaText}>{profile.labour?.address || profile.labour?.location}</Text>
+                      <Text style={styles.profileMetaText}>{labourAccountProfile?.address || labourAccountProfile?.location}</Text>
                     </View>
 
                     <View style={styles.profileMetaItem}>
                       <Ionicons name="call" size={10} color="#ffffff" />
-                      <Text style={styles.profileMetaText}>{profile.labour?.mobile || profile.labour?.phone}</Text>
+                      <Text style={styles.profileMetaText}>{labourAccountProfile?.mobile || labourAccountProfile?.phone}</Text>
                     </View>
 
                     <View style={styles.profileMetaItem}>
                       <Ionicons name="star" size={10} color="#f7c948" />
                       <Text style={styles.profileMetaText}>
-                        {profile.labour?.rating} ({profile.labour?.reviews})
+                        {labourAccountProfile?.rating} ({labourAccountProfile?.reviews})
                       </Text>
                     </View>
                   </View>
@@ -527,7 +623,7 @@ export function LabourDashboard({
               <View style={styles.editForm}>
                 <TextInput
                   style={styles.editInput}
-                  value={editedProfile.name}
+                  value={editedProfile.name || ''}
                   onChangeText={(value) => setEditedProfile((prev) => ({ ...prev, name: value }))}
                   placeholder="Name"
                   placeholderTextColor="#b8d1cb"
@@ -680,7 +776,7 @@ export function LabourDashboard({
         </View>
 
         <View style={styles.preferenceMetaRow}>
-          {(profile.preferences || labourProfile.preferences).map((item, index) => (
+          {((labourAccountProfile?.preferences || labourProfile.preferences) || []).map((item, index) => (
             <View key={item} style={styles.preferenceMetaItem}>
               <Ionicons
                 name={
@@ -702,7 +798,9 @@ export function LabourDashboard({
       <View style={styles.panel}>
         <Text style={styles.panelTitle}>{text.availableJobsTitle}</Text>
         <View style={styles.jobsList}>
-          {postedJobs.map((job) => (
+          {jobsLoading ? <Text style={styles.detailCardTitle}>Loading jobs...</Text> : null}
+          {jobsError ? <Text style={styles.detailCardTitle}>{jobsError}</Text> : null}
+          {!jobsLoading && matchedJobs.map((job) => (
             <JobCard
               key={job.id}
               copy={text}
@@ -712,6 +810,13 @@ export function LabourDashboard({
               disabled={appliedJobs.includes(job.id)}
             />
           ))}
+          {!jobsLoading && !matchedJobs.length ? (
+            <Text style={styles.detailCardTitle}>
+              {labourLocation
+                ? `No jobs found for ${labourLocation}.`
+                : 'Add your location to see matching jobs.'}
+            </Text>
+          ) : null}
         </View>
       </View>
 
