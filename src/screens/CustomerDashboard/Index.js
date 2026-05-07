@@ -38,18 +38,18 @@ import { styles } from './styles';
 import {
   ApplicationsSection,
   dedupeApplicationsByMobile,
-} from './sections/ApplicationsSection';
-import { HeroSection } from './sections/HeroSection';
+} from './ApplicationsSection';
+import { HeroSection } from './HeroSection';
 import {
   LabourSection,
   mapDirectRequestToLabourCard,
-} from './sections/LabourSection';
-import { NotificationsSection } from './sections/NotificationsSection';
+} from './LabourSection';
+import { NotificationsSection } from './NotificationsSection';
 import {
   ProfileSection,
   buildSavePayload
-} from './sections/ProfileSection';
-import { StatsSection } from './sections/StatsSection';
+} from './ProfileSection';
+import { StatsSection } from './StatsSection';
 
 // ─── Shared location helpers ──────────────────────────────────────────────────
 
@@ -609,3 +609,4 @@ useEffect(() => {
     </ScrollView>
   );
 }
+

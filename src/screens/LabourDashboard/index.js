@@ -30,22 +30,22 @@ import { mergeUniqueNotifications } from '../../utils/notificationUtils';
 import { styles } from './styles';
 
 // ─── Section components ────────────────────────────────────────────────────────
-import { HeroSection } from './sections/HeroSection';
-import { StatsSection } from './sections/StatsSection';
-import { NotificationsSection } from './sections/NotificationsSection';
+import { HeroSection } from './HeroSection';
+import { StatsSection } from './StatsSection';
+import { NotificationsSection } from './NotificationsSection';
 import {
   ProfileSection,
   EMPTY_SKILL_FORM,
   normalizeSkills,
   buildSkillPayload,
   validateSkillForm,
-} from './sections/ProfileSection';
+} from './ProfileSection';
 import {
   JobsSection,
   filterJobsByLocation,
   buildLabourLocation,
-} from './sections/JobsSection';
-import { ReviewsSection } from './sections/ReviewsSection';
+} from './JobsSection';
+import { ReviewsSection } from './ReviewsSection';
 
 // ─── i18n for skill editor ────────────────────────────────────────────────────
 
@@ -420,7 +420,7 @@ export function LabourDashboard({ language, onLogout, postedJobs, session }) {
         setNotifications(mergeUniqueNotifications(fetched, directNotifications));
 
         Alert.alert(text.applicationSuccessTitle, text.applicationSuccessMessage);
-      } catch (err) {
+      } catch {
         setAppliedJobs((prev) => prev.filter((id) => id !== job.id));
         Alert.alert('Error', 'Failed to submit application. Please try again.');
       }
@@ -564,3 +564,4 @@ export function LabourDashboard({ language, onLogout, postedJobs, session }) {
     </ScrollView>
   );
 }
+

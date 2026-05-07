@@ -26,6 +26,7 @@ import {
 } from '../../data/dashboardData';
 import {
   applyToJob,
+  fetchLabourApplications,
   fetchLabourNotifications,
 } from '../../services/applicationService';
 import {
@@ -113,17 +114,6 @@ const getLabourProfile = (profile, sessionUser, sessionToken) => {
   }
 
   return sessionToken === 'demo-session' ? labourProfile : {};
-};
-
-const isSameDate = (left, right) => {
-  const leftDate = new Date(left);
-  const rightDate = new Date(right);
-
-  return (
-    leftDate.getFullYear() === rightDate.getFullYear() &&
-    leftDate.getMonth() === rightDate.getMonth() &&
-    leftDate.getDate() === rightDate.getDate()
-  );
 };
 
 export function LabourDashboard({
@@ -237,9 +227,10 @@ export function LabourDashboard({
       setNotificationsLoading(true);
 
       try {
-        const [fetchedNotifications, myAvailability] = await Promise.all([
+        const [fetchedNotifications, myAvailability, assignedApplications] = await Promise.all([
           fetchLabourNotifications(session.token),
           fetchMyAvailability(session.token).catch(() => null),
+          fetchLabourApplications(session.token).catch(() => []),
         ]);
 
         const directNotifications = myAvailability
@@ -250,14 +241,9 @@ export function LabourDashboard({
           setAvailabilityRequest(myAvailability);
           setNotifications(mergeUniqueNotifications(fetchedNotifications, directNotifications));
           setAppliedJobs(
-            fetchedNotifications
-              .filter(
-                (notification) =>
-                  notification.jobId &&
-                  ['applied', 'hired', 'accepted'].includes(notification.status) &&
-                  isSameDate(notification.timestamp, new Date())
-              )
-              .map((notification) => notification.jobId)
+            assignedApplications
+              .filter((application) => ['assigned', 'applied', 'hired', 'accepted'].includes(application.status))
+              .map((application) => application.job.id)
           );
         }
       } catch (notificationError) {
@@ -452,6 +438,11 @@ export function LabourDashboard({
     return;
   }
 
+  if (job.isCompleted || job.availableSlots <= 0) {
+    Alert.alert('Job full', 'Is job ke required labours complete ho chuke hain.');
+    return;
+  }
+
   // Function to handle the actual API call
   const confirmApply = async () => {
     try {
@@ -462,17 +453,19 @@ export function LabourDashboard({
       await applyToJob(job.id, session.token);
 
       // Refresh notifications after applying
-      const [fetchedNotifications, myAvailability] = await Promise.all([
+      const [fetchedNotifications, myAvailability, refreshedJobs] = await Promise.all([
         fetchLabourNotifications(session.token),
         fetchMyAvailability(session.token).catch(() => null),
+        fetchJobs(session.token).catch(() => jobs),
       ]);
       const directNotifications = myAvailability
         ? normalizeDirectHireNotifications(myAvailability, 'labour')
         : [];
       setAvailabilityRequest(myAvailability);
+      setJobs(refreshedJobs);
       setNotifications(mergeUniqueNotifications(fetchedNotifications, directNotifications));
 
-      Alert.alert(text.applicationSuccessTitle, text.applicationSuccessMessage);
+      Alert.alert('Assigned', 'Aap is job par auto assigned ho gaye hain.');
     } catch (err) {
       console.error('Apply job error:', err);
 
@@ -500,6 +493,11 @@ export function LabourDashboard({
   const handleTodayWork = async () => {
     if (!session?.token || session.token === 'demo-session') {
       Alert.alert('Login required', 'Please login with a labour account first.');
+      return;
+    }
+
+    if (availabilityRequest?.status === 'hired') {
+      Alert.alert('Already hired', 'Aapko direct hire work assign ho chuka hai.');
       return;
     }
 
@@ -981,9 +979,15 @@ export function LabourDashboard({
               key={job.id}
               copy={text}
               job={job}
-              actionLabel={appliedJobs.includes(job.id) ? text.applied : text.applyNow}
+              actionLabel={
+                job.isCompleted || job.availableSlots <= 0
+                  ? 'Job Completed'
+                  : appliedJobs.includes(job.id)
+                    ? 'Assigned'
+                    : text.applyNow
+              }
               onActionPress={() => handleApplyForJob(job)}
-              disabled={appliedJobs.includes(job.id)}
+              disabled={job.isCompleted || job.availableSlots <= 0 || appliedJobs.includes(job.id)}
             />
           ))}
           {!jobsLoading && !matchedJobs.length ? (

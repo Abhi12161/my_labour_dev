@@ -9,6 +9,10 @@ function extractJobsPayload(response) {
     return response.jobs;
   }
 
+  if (Array.isArray(response?.data?.jobs)) {
+    return response.data.jobs;
+  }
+
   if (Array.isArray(response?.data)) {
     return response.data;
   }
@@ -27,19 +31,28 @@ function normalizeJob(job, index = 0) {
   const description = job?.description || '';
   const skill = job?.skill || job?.category || 'General';
   const time = job?.timing || job?.time || 'Today';
+  const requiredLabours = Number(job?.requiredLabours || job?.requiredLabour || job?.requiredWorkers || 1);
+  const hiredCount = Number(job?.hiredCount || job?.assignedCount || job?.applicants || job?.applicationsCount || 0);
+  const status = String(job?.status || (hiredCount >= requiredLabours ? 'Completed' : 'Open'));
+  const normalizedStatus = status.toLowerCase();
 
   return {
     id: String(job?._id || job?.id || `job-${index}`),
     title,
     location,
     posted: job?.posted || time,
-    applicants: Number(job?.applicants || job?.applicationsCount || 0),
+    applicants: hiredCount,
     distance: job?.distance || 'Nearby',
     description,
     skill,
     skillLevel: job?.level || job?.skillLevel || 'Skilled',
     time,
     city,
+    requiredLabours,
+    hiredCount,
+    availableSlots: Math.max(requiredLabours - hiredCount, 0),
+    status,
+    isCompleted: normalizedStatus === 'completed' || normalizedStatus === 'closed' || hiredCount >= requiredLabours,
     raw: job,
   };
 }
@@ -62,6 +75,7 @@ export async function createJob(payload, token) {
 
   const createdJob =
     response?.job ||
+    response?.data?.job ||
     response?.data ||
     response?.result ||
     response;

@@ -6,7 +6,7 @@
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LabourCard } from '../../components/LabourCard';
-import { styles } from '../styles';
+import { styles } from './styles';
 import { localStyles } from './sharedStyles';
 
 // ─── Data helpers ─────────────────────────────────────────────────────────────
@@ -370,3 +370,4 @@ export function ApplicationsSection({
     </>
   );
 }
+

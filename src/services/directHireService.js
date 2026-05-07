@@ -1,5 +1,25 @@
 import { apiRequest } from './http';
 
+const DIRECT_HIRE_BASE_PATHS = ['/labour-request', '/labour-requests'];
+
+async function directHireRequest(path, options) {
+  let lastError;
+
+  for (const basePath of DIRECT_HIRE_BASE_PATHS) {
+    try {
+      return await apiRequest(`${basePath}${path}`, options);
+    } catch (error) {
+      lastError = error;
+
+      if (!String(error.message || '').toLowerCase().includes('route not found')) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 function toArray(response) {
   if (Array.isArray(response)) {
     return response;
@@ -85,7 +105,10 @@ export function normalizeDirectHireNotifications(request, role = 'labour') {
       type: entry?.type || request.statusLabel || 'Notification',
       status: String(entry?.type || request.statusLabel || 'notification').toLowerCase(),
       statusLabel: entry?.type || request.statusLabel || 'Notification',
-      message: entry?.message || request.notification || 'Notification received',
+      message:
+        typeof entry === 'string'
+          ? entry
+          : entry?.message || request.notification || 'Notification received',
       timestamp: entry?.createdAt || request.updatedAt || request.createdAt,
       actorName: role === 'customer' ? request.labour.name : request.customer.name,
       actorMobile: role === 'customer' ? request.labour.mobile : request.customer.mobile,
@@ -119,7 +142,7 @@ export function normalizeDirectHireNotifications(request, role = 'labour') {
 }
 
 export async function fetchAvailableLabourRequests(token) {
-  const response = await apiRequest('/labour-request/list', {
+  const response = await directHireRequest('/list', {
     method: 'GET',
     token,
   });
@@ -128,7 +151,8 @@ export async function fetchAvailableLabourRequests(token) {
 }
 
 export async function fetchNearbyLabourRequests(token, city) {
-  const response = await apiRequest(`/labour-request/nearby?city=${encodeURIComponent(city)}`, {
+  const query = `?city=${encodeURIComponent(city)}`;
+  const response = await directHireRequest(`/nearby${query}`, {
     method: 'GET',
     token,
   });
@@ -137,7 +161,7 @@ export async function fetchNearbyLabourRequests(token, city) {
 }
 
 export async function markLabourAvailable(token) {
-  const response = await apiRequest('/labour-request/request', {
+  const response = await directHireRequest('/request', {
     method: 'POST',
     token,
   });
@@ -146,7 +170,7 @@ export async function markLabourAvailable(token) {
 }
 
 export async function fetchMyAvailability(token) {
-  const response = await apiRequest('/labour-request/me', {
+  const response = await directHireRequest('/me', {
     method: 'GET',
     token,
   });
@@ -155,7 +179,7 @@ export async function fetchMyAvailability(token) {
 }
 
 export async function directHireLabour(requestId, payload, token) {
-  const response = await apiRequest(`/labour-request/hire/${requestId}`, {
+  const response = await directHireRequest(`/hire/${requestId}`, {
     method: 'PUT',
     token,
     body: JSON.stringify({

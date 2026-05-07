@@ -9,7 +9,7 @@ import { FilterBar } from '../../components/FilterBar';
 import { JobCard } from '../../components/JobCard';
 import { LabourCard } from '../../components/LabourCard';
 import { labourFilterOptions } from '../../data/dashboardData';
-import { styles } from '../styles';
+import { styles } from './styles';
 import { localStyles } from './sharedStyles';
 
 // ─── Data helpers ─────────────────────────────────────────────────────────────
@@ -341,3 +341,4 @@ export function LabourSection({
     </>
   );
 }
+

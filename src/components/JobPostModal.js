@@ -22,6 +22,7 @@ const initialForm = {
   city: 'Muzaffarpur',
   timing: 'Today',
   level: 'Skilled',
+  requiredLabours: '5',
 };
 
 function OptionGroup({ label, options, value, onChange }) {
@@ -228,6 +229,18 @@ export function JobPostModal({
               value={form.level}
               onChange={(value) => updateField('level', value)}
             />
+
+            <View style={styles.group}>
+              <Text style={styles.label}>Required labours</Text>
+              <TextInput
+                style={styles.input}
+                value={String(form.requiredLabours)}
+                onChangeText={(value) => updateField('requiredLabours', value.replace(/[^0-9]/g, ''))}
+                placeholder="5"
+                keyboardType="number-pad"
+                placeholderTextColor={colors.textMuted}
+              />
+            </View>
           </ScrollView>
 
           <PrimaryButton

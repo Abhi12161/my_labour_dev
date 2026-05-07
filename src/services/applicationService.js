@@ -9,8 +9,16 @@ function toArray(response) {
     return response.applications;
   }
 
+  if (Array.isArray(response?.data?.applications)) {
+    return response.data.applications;
+  }
+
   if (Array.isArray(response?.notifications)) {
     return response.notifications;
+  }
+
+  if (Array.isArray(response?.data?.notifications)) {
+    return response.data.notifications;
   }
 
   if (Array.isArray(response?.data)) {
@@ -43,12 +51,12 @@ function normalizeStatus(value, fallback = 'pending') {
 export function normalizeApplication(item, index = 0) {
   const job = getJobFromApplication(item);
   const labour = getLabourFromApplication(item);
-  const status = normalizeStatus(item?.status);
+  const status = normalizeStatus(item?.status, 'assigned');
 
   return {
     id: String(item?._id || item?.id || item?.applicationId || `application-${index}`),
     status,
-    statusLabel: item?.status || 'Pending',
+    statusLabel: item?.status || 'Assigned',
     appliedAt: item?.createdAt || item?.appliedAt || item?.timestamp || new Date().toISOString(),
     customerId: item?.customerId || job?.customerId || '',
     job: {
@@ -157,7 +165,7 @@ export async function applyToJob(jobId, token) {
 
   // Normalize and return the application object
   return normalizeApplication(
-    response?.application || response?.data || response?.result || response
+    response?.application || response?.data?.application || response?.data || response?.result || response
   );
 }
 
@@ -173,7 +181,7 @@ export async function fetchLabourNotifications(token) {
 }
 
 export async function fetchCustomerNotifications(token) {
-  const response = await apiRequest('/job-applications/notifications', {
+  const response = await apiRequest('/job-applications/customer/notifications', {
     method: 'GET',
     token,
   });
@@ -199,6 +207,39 @@ export async function hireApplication(applicationId, token) {
   });
 
   return normalizeApplication(
-    response?.application || response?.data || response?.result || response
+    response?.application || response?.data?.application || response?.data || response?.result || response
+  );
+}
+
+export async function fetchLabourApplications(token) {
+  const response = await apiRequest('/job-applications/my', {
+    method: 'GET',
+    token,
+  });
+
+  return toArray(response).map(normalizeApplication);
+}
+
+export async function cancelApplication(applicationId, reason, token) {
+  const response = await apiRequest(`/job-applications/cancel/${applicationId}`, {
+    method: 'PUT',
+    token,
+    body: JSON.stringify({ reason }),
+  });
+
+  return normalizeApplication(
+    response?.application || response?.data?.application || response?.data || response?.result || response
+  );
+}
+
+export async function cancelCustomerApplication(applicationId, reason, token) {
+  const response = await apiRequest(`/job-applications/customer/cancel/${applicationId}`, {
+    method: 'PUT',
+    token,
+    body: JSON.stringify({ reason }),
+  });
+
+  return normalizeApplication(
+    response?.application || response?.data?.application || response?.data || response?.result || response
   );
 }

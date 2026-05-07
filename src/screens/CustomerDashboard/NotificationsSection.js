@@ -5,7 +5,7 @@
 
 import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { styles } from '../styles';
+import { styles } from './styles';
 import { localStyles } from './sharedStyles';
 
 // ─── Data helpers ─────────────────────────────────────────────────────────────
@@ -103,3 +103,4 @@ export function NotificationsSection({ text, notifications, notificationsLoading
     </View>
   );
 }
+

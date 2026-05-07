@@ -4,9 +4,8 @@
 // Actions: onApplyForJob
 
 import { Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { JobCard } from '../../components/JobCard';
-import { styles } from '../styles';
+import { styles } from './styles';
 
 // ─── Data helpers ─────────────────────────────────────────────────────────────
 
@@ -135,3 +134,4 @@ export function JobsSection({
     </View>
   );
 }
+

@@ -5,7 +5,7 @@
 
 import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { styles } from '../styles';
+import { styles } from './styles';
 
 // ─── Data helper ─────────────────────────────────────────────────────────────
 
@@ -103,3 +103,4 @@ export function HeroSection({ text, customerProfile, session, onLogout }) {
     </View>
   );
 }
+

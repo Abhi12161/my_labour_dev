@@ -18,9 +18,9 @@ import {
   popularSkills,
 } from '../../data/dashboardData';
 import {
+  cancelCustomerApplication,
   fetchCustomerApplications,
   fetchCustomerNotifications,
-  hireApplication,
 } from '../../services/applicationService';
 import {
   directHireLabour,
@@ -90,7 +90,7 @@ const mapApplicationToLabourCard = (application) => ({
   reviews: 0,
   distance: application.job.location,
   location: application.labour.address,
-  availability: application.status === 'hired' ? 'Hired' : 'Applied',
+  availability: application.status === 'cancelled' ? 'Cancelled' : 'Assigned',
   photoLabel: (application.labour.name || 'L').charAt(0).toUpperCase(),
 });
 
@@ -429,6 +429,7 @@ export function CustomerDashboard({
       location: form.city,
       timing: form.timing,
       level: form.level,
+      requiredLabours: Math.max(Number(form.requiredLabours) || 1, 1),
     };
 
     try {
@@ -480,7 +481,11 @@ export function CustomerDashboard({
   const handleHireLabour = async (application) => {
     try {
       setHiringApplicationId(application.id);
-      const updatedApplication = await hireApplication(application.id, session.token);
+      const updatedApplication = await cancelCustomerApplication(
+        application.id,
+        'Cancelled by customer',
+        session.token
+      );
       const refreshedNotifications = await fetchCustomerNotifications(session.token);
 
       setApplications((current) =>
@@ -489,9 +494,9 @@ export function CustomerDashboard({
         )
       );
       setNotifications(refreshedNotifications);
-      Alert.alert('Success', `${updatedApplication.labour.name} has been hired successfully.`);
+      Alert.alert('Success', `${updatedApplication.labour.name} assignment has been cancelled.`);
     } catch (hireError) {
-      Alert.alert('Error', hireError.message || 'Failed to hire labour.');
+      Alert.alert('Error', hireError.message || 'Failed to cancel assignment.');
     } finally {
       setHiringApplicationId('');
     }
@@ -855,18 +860,18 @@ export function CustomerDashboard({
                   copy={text}
                   labour={mapApplicationToLabourCard(application)}
                   actionLabel={
-                    application.status === 'hired'
-                      ? 'Hired'
+                    application.status === 'cancelled'
+                      ? 'Cancelled'
                       : hiringApplicationId === application.id
-                        ? 'Hiring...'
-                        : text.hireNow
+                        ? 'Cancelling...'
+                        : 'Cancel Assignment'
                   }
                   onActionPress={
-                    application.status === 'hired'
+                    application.status === 'cancelled'
                       ? undefined
                       : () => handleHireLabour(application)
                   }
-                  disabled={application.status === 'hired' || hiringApplicationId === application.id}
+                  disabled={application.status === 'cancelled' || hiringApplicationId === application.id}
                 />
               </View>
             ))
@@ -1051,22 +1056,22 @@ export function CustomerDashboard({
               <Pressable
                 style={[
                   localStyles.sheetHireButton,
-                  (selectedApplication?.status === 'hired' ||
+                  (selectedApplication?.status === 'cancelled' ||
                     hiringApplicationId === selectedApplication?.id) &&
                   localStyles.sheetHireButtonDisabled,
                 ]}
                 disabled={
-                  selectedApplication?.status === 'hired' ||
+                  selectedApplication?.status === 'cancelled' ||
                   hiringApplicationId === selectedApplication?.id
                 }
                 onPress={() => handleHireLabour(selectedApplication)}
               >
                 <Text style={localStyles.sheetHireButtonText}>
-                  {selectedApplication?.status === 'hired'
-                    ? 'Already Hired'
+                  {selectedApplication?.status === 'cancelled'
+                    ? 'Cancelled'
                     : hiringApplicationId === selectedApplication?.id
-                      ? 'Hiring...'
-                      : text.hireNow}
+                      ? 'Cancelling...'
+                      : 'Cancel Assignment'}
                 </Text>
               </Pressable>
             </ScrollView>
