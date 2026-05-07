@@ -19,10 +19,10 @@ export function RoleSelectionScreen({ language, onChangeLanguage, onSelectRole }
   const location = useSelector((state) => state.location);
 
   useEffect(() => {
-    console.log('FULL LOCATION DATA ðŸ‘‰', location.fullData);
-    console.log('CITY ðŸ‘‰', location.fullData?.address?.city);
-    console.log('STATE ðŸ‘‰', location.fullData?.address?.state);
-    console.log('COUNTRY ðŸ‘‰', location.fullData?.address?.country);
+    console.log('FULL LOCATION DATA ', location);
+    console.log('CITY ', location.fullData?.address?.city);
+    console.log('STATE ', location.fullData?.address?.state);
+    console.log('COUNTRY ', location.fullData?.address?.country);
   }, [location]);
 
   const roles = [

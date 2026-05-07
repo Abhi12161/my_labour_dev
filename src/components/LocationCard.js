@@ -18,6 +18,7 @@ export function LocationCard({ text }) {
   const { status, coords, name, error } = useSelector(
     (state) => state.location
   );
+  const locationState = useSelector((state) => state.location);
 
   const latitude = coords?.latitude;
   const longitude = coords?.longitude;
@@ -79,9 +80,10 @@ export function LocationCard({ text }) {
         {loadingLocation ? (
           <ActivityIndicator size="small" color="#4f46e5" />
         ) : (
-          <Text style={styles.locationText} numberOfLines={1}>
-            {locationName}
-          </Text>
+          <Text style={{ fontSize: 10 }}>
+  {JSON.stringify(locationState, null, 2)}
+</Text>
+          
         )}
       </View>
 
