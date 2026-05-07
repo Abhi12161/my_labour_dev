@@ -24,9 +24,12 @@ import {
   labourWorkHistory,
 } from '../../data/dashboardData';
 import {
-  saveJobApplication,
   saveTodayWorkRequest,
 } from '../../services/http';
+import {
+  applyToJob,
+  fetchLabourNotifications,
+} from '../../services/applicationService';
 import { fetchJobs } from '../../services/jobService';
 import {
   createSkill,
@@ -130,6 +133,7 @@ export function LabourDashboard({
   const [jobs, setJobs] = useState(postedJobs || []);
   const [jobsLoading, setJobsLoading] = useState(false);
   const [jobsError, setJobsError] = useState('');
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [skillForm, setSkillForm] = useState({
     skillId: null,
     name: '',
@@ -196,6 +200,57 @@ export function LabourDashboard({
       isMounted = false;
     };
   }, [postedJobs, session?.token]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadNotifications = async () => {
+      const shouldUseApiNotifications =
+        Boolean(session?.token) &&
+        session.token !== 'demo-session' &&
+        session?.role === 'labour';
+
+      if (!shouldUseApiNotifications) {
+        setNotifications([]);
+        return;
+      }
+
+      setNotificationsLoading(true);
+
+      try {
+        const fetchedNotifications = await fetchLabourNotifications(session.token);
+
+        if (isMounted) {
+          setNotifications(fetchedNotifications);
+        }
+      } catch (notificationError) {
+        if (isMounted) {
+          setNotifications((current) =>
+            current.length
+              ? current
+              : [
+                  {
+                    id: 'notification-error',
+                    type: 'error',
+                    message: notificationError.message || 'Failed to load notifications.',
+                    timestamp: new Date().toISOString(),
+                  },
+                ]
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setNotificationsLoading(false);
+        }
+      }
+    };
+
+    loadNotifications();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session?.role, session?.token]);
 
   const normalizedSkills = Array.isArray(labourAccountProfile?.skills)
     ? labourAccountProfile.skills.map((skill) =>
@@ -335,6 +390,11 @@ export function LabourDashboard({
   };
 
   const handleApplyForJob = (job) => {
+    if (!session?.token || session.token === 'demo-session') {
+      Alert.alert('Login required', 'Please login with a labour account to apply for jobs.');
+      return;
+    }
+
     if (appliedJobs.includes(job.id)) {
       Alert.alert(text.alreadyAppliedTitle, text.alreadyAppliedMessage);
       return;
@@ -350,18 +410,10 @@ export function LabourDashboard({
           onPress: async () => {
             try {
               setAppliedJobs((prev) => [...prev, job.id]);
+              await applyToJob(job.id, session.token);
 
-              setNotifications((prev) => [
-                {
-                  id: Date.now(),
-                  type: 'application',
-                  message: text.applicationSubmitted.replace('{job}', job.title),
-                  timestamp: new Date().toISOString(),
-                },
-                ...prev,
-              ]);
-
-              await saveJobApplication(job, session.user);
+              const fetchedNotifications = await fetchLabourNotifications(session.token);
+              setNotifications(fetchedNotifications);
               Alert.alert(text.applicationSuccessTitle, text.applicationSuccessMessage);
             } catch {
               setAppliedJobs((prev) => prev.filter((id) => id !== job.id));
@@ -517,7 +569,7 @@ export function LabourDashboard({
         <PrimaryButton label="Apply for Job" onPress={handleTodayWork} />
       </View>
 
-      {notifications.length > 0 && (
+      {(notificationsLoading || notifications.length > 0) && (
         <View style={styles.detailCard}>
           <View style={styles.detailCardHeader}>
             <View style={styles.detailCardTitleWrap}>
@@ -527,12 +579,21 @@ export function LabourDashboard({
           </View>
 
           <View style={styles.notificationList}>
+            {notificationsLoading ? (
+              <Text style={styles.detailCardHint}>Loading notifications...</Text>
+            ) : null}
             {notifications.slice(0, 3).map((notification) => (
               <View key={notification.id} style={styles.notificationCard}>
                 <View style={styles.notificationTopRow}>
                   <View style={styles.notificationIconWrap}>
                     <Ionicons
-                      name={notification.type === 'today_work' ? 'flash-outline' : 'document-text-outline'}
+                      name={
+                        notification.type === 'today_work'
+                          ? 'flash-outline'
+                          : notification.status === 'hired'
+                            ? 'checkmark-done-outline'
+                            : 'document-text-outline'
+                      }
                       size={12}
                       color="#0c5a49"
                     />
@@ -543,6 +604,21 @@ export function LabourDashboard({
                 </View>
 
                 <Text style={styles.notificationText}>{notification.message}</Text>
+                {notification.jobTitle ? (
+                  <Text style={styles.detailCardHint}>Job: {notification.jobTitle}</Text>
+                ) : null}
+                {notification.jobLocation ? (
+                  <Text style={styles.detailCardHint}>Location: {notification.jobLocation}</Text>
+                ) : null}
+                {notification.actorName ? (
+                  <Text style={styles.detailCardHint}>Name: {notification.actorName}</Text>
+                ) : null}
+                {notification.actorAddress ? (
+                  <Text style={styles.detailCardHint}>Address: {notification.actorAddress}</Text>
+                ) : null}
+                {notification.actorMobile ? (
+                  <Text style={styles.detailCardHint}>Phone: {notification.actorMobile}</Text>
+                ) : null}
               </View>
             ))}
           </View>

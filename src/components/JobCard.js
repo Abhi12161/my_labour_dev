@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
-export function JobCard({ job, actionLabel, onActionPress }) {
+export function JobCard({ job, actionLabel, onActionPress, disabled = false }) {
   return (
     <View style={styles.wrapper}>
       <View style={styles.card}>
@@ -35,17 +36,18 @@ export function JobCard({ job, actionLabel, onActionPress }) {
           </Text>
         )}
 
-        {/* CTA */}
-        {/* <Pressable onPress={onActionPress}>
-          <LinearGradient
-            colors={['#1f7a63', '#166534']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.button}
-          >
-            <Text style={styles.buttonText}>{actionLabel}</Text>
-          </LinearGradient>
-        </Pressable> */}
+        {actionLabel ? (
+          <Pressable onPress={onActionPress} disabled={disabled}>
+            <LinearGradient
+              colors={disabled ? ['#8ba69d', '#7b8f88'] : ['#1f7a63', '#166534']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.button, disabled && styles.buttonDisabled]}
+            >
+              <Text style={styles.buttonText}>{actionLabel}</Text>
+            </LinearGradient>
+          </Pressable>
+        ) : null}
 
       </View>
     </View>
@@ -144,5 +146,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 13,
     fontWeight: '700',
+  },
+  buttonDisabled: {
+    opacity: 0.8,
   },
 });

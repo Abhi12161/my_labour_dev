@@ -2,7 +2,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
-export function LabourCard({ copy, labour }) {
+export function LabourCard({
+  copy,
+  labour,
+  actionLabel,
+  onActionPress,
+  disabled = false,
+}) {
   const scale = useRef(new Animated.Value(1)).current;
 const onPressIn = () => {
   Animated.spring(scale, {
@@ -69,14 +75,19 @@ const onPressOut = () => {
 
         {/* BUTTON WITH ANIMATION */}
         <Animated.View style={{ transform: [{ scale }] }}>
-          <Pressable onPressIn={onPressIn} onPressOut={onPressOut}>
+          <Pressable
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
+            onPress={onActionPress}
+            disabled={disabled || !onActionPress}
+          >
             <LinearGradient
-              colors={['#1f7a63', '#2ecc71']}
+              colors={disabled ? ['#8ba69d', '#7b8f88'] : ['#1f7a63', '#2ecc71']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.button}
+              style={[styles.button, disabled && styles.buttonDisabled]}
             >
-              <Text style={styles.buttonText}>{copy.hireNow}</Text>
+              <Text style={styles.buttonText}>{actionLabel || copy.hireNow}</Text>
             </LinearGradient>
           </Pressable>
         </Animated.View>
@@ -215,5 +226,8 @@ outer: {
     color: '#fff',
     fontWeight: '700',
     fontSize: 13,
+  },
+  buttonDisabled: {
+    opacity: 0.85,
   },
 });
