@@ -129,6 +129,38 @@ const dedupeApplicationsByMobile = (applications) => {
   return Array.from(seen.values());
 };
 
+const normalizeIdentity = (value) => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return normalized === 'not provided' ? '' : normalized;
+};
+
+const getHiredLabourKeys = (applications) => {
+  const hiredStatuses = new Set(['hired', 'assigned', 'accepted']);
+  const keys = new Set();
+
+  applications.forEach((application) => {
+    if (!hiredStatuses.has(normalizeIdentity(application.status))) return;
+
+    const labourId = normalizeIdentity(application.labour?.id);
+    const labourMobile = normalizeIdentity(application.labour?.mobile);
+
+    if (labourId) keys.add(`id:${labourId}`);
+    if (labourMobile) keys.add(`mobile:${labourMobile}`);
+  });
+
+  return keys;
+};
+
+const isAlreadyHiredLabour = (request, hiredLabourKeys) => {
+  const labourId = normalizeIdentity(request.labour?.id);
+  const labourMobile = normalizeIdentity(request.labour?.mobile);
+
+  return (
+    (labourId && hiredLabourKeys.has(`id:${labourId}`)) ||
+    (labourMobile && hiredLabourKeys.has(`mobile:${labourMobile}`))
+  );
+};
+
 export function CustomerDashboard({
   language,
   onLogout,
@@ -378,12 +410,25 @@ export function CustomerDashboard({
   session?.token,
 ]);
 
+  const hiredLabourKeys = useMemo(
+    () => getHiredLabourKeys(applications),
+    [applications]
+  );
+
+  const visibleAvailableRequests = useMemo(
+    () =>
+      availableRequests.filter(
+        (request) => !isAlreadyHiredLabour(request, hiredLabourKeys)
+      ),
+    [availableRequests, hiredLabourKeys]
+  );
+
   const filteredLabours = useMemo(() => {
-    return filterJobs(availableRequests.map(mapDirectRequestToLabourCard), {
+    return filterJobs(visibleAvailableRequests.map(mapDirectRequestToLabourCard), {
       ...filters,
       search: deferredSearch,
     });
-  }, [availableRequests, deferredSearch, filters]);
+  }, [visibleAvailableRequests, deferredSearch, filters]);
 
   const customerLocation =
     customerProfile?.address ||
@@ -493,6 +538,15 @@ export function CustomerDashboard({
           current.map((item) => (item.id === updatedApplication.id ? updatedApplication : item))
         )
       );
+      if (['hired', 'assigned', 'accepted'].includes(normalizeIdentity(updatedApplication.status))) {
+        setAvailableRequests((current) =>
+          current.filter(
+            (request) =>
+              normalizeIdentity(request.labour?.id) !== normalizeIdentity(updatedApplication.labour?.id) &&
+              normalizeIdentity(request.labour?.mobile) !== normalizeIdentity(updatedApplication.labour?.mobile)
+          )
+        );
+      }
       setNotifications(refreshedNotifications);
       Alert.alert('Success', `${updatedApplication.labour.name} assignment has been cancelled.`);
     } catch (hireError) {

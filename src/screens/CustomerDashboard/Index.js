@@ -92,6 +92,38 @@ const INITIAL_FILTERS = {
   rating: 'All',
 };
 
+const normalizeIdentity = (value) => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return normalized === 'not provided' ? '' : normalized;
+};
+
+const getHiredLabourKeys = (applications) => {
+  const hiredStatuses = new Set(['hired', 'assigned', 'accepted']);
+  const keys = new Set();
+
+  applications.forEach((application) => {
+    if (!hiredStatuses.has(normalizeIdentity(application.status))) return;
+
+    const labourId = normalizeIdentity(application.labour?.id);
+    const labourMobile = normalizeIdentity(application.labour?.mobile);
+
+    if (labourId) keys.add(`id:${labourId}`);
+    if (labourMobile) keys.add(`mobile:${labourMobile}`);
+  });
+
+  return keys;
+};
+
+const isAlreadyHiredLabour = (request, hiredLabourKeys) => {
+  const labourId = normalizeIdentity(request.labour?.id);
+  const labourMobile = normalizeIdentity(request.labour?.mobile);
+
+  return (
+    (labourId && hiredLabourKeys.has(`id:${labourId}`)) ||
+    (labourMobile && hiredLabourKeys.has(`mobile:${labourMobile}`))
+  );
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function CustomerDashboard({
@@ -336,13 +368,26 @@ useEffect(() => {
   // Derived data
   // ─────────────────────────────────────────────────────────────────────────────
 
+  const hiredLabourKeys = useMemo(
+    () => getHiredLabourKeys(applications),
+    [applications]
+  );
+
+  const visibleAvailableRequests = useMemo(
+    () =>
+      availableRequests.filter(
+        (request) => !isAlreadyHiredLabour(request, hiredLabourKeys)
+      ),
+    [availableRequests, hiredLabourKeys]
+  );
+
   const filteredLabours = useMemo(
     () =>
-      filterJobs(availableRequests.map(mapDirectRequestToLabourCard), {
+      filterJobs(visibleAvailableRequests.map(mapDirectRequestToLabourCard), {
         ...filters,
         search: deferredSearch,
       }),
-    [availableRequests, deferredSearch, filters]
+    [visibleAvailableRequests, deferredSearch, filters]
   );
 
   const customerLocation =
@@ -453,6 +498,15 @@ useEffect(() => {
           current.map((item) => (item.id === updated.id ? updated : item))
         )
       );
+      if (['hired', 'assigned', 'accepted'].includes(normalizeIdentity(updated.status))) {
+        setAvailableRequests((current) =>
+          current.filter(
+            (request) =>
+              normalizeIdentity(request.labour?.id) !== normalizeIdentity(updated.labour?.id) &&
+              normalizeIdentity(request.labour?.mobile) !== normalizeIdentity(updated.labour?.mobile)
+          )
+        );
+      }
       setNotifications(refreshedNotifications);
       Alert.alert('Success', `${updated.labour.name} has been hired successfully.`);
     } catch (err) {

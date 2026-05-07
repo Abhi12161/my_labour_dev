@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -44,6 +44,66 @@ import {
 } from '../../store/profileSlice';
 import { mergeUniqueNotifications } from '../../utils/notificationUtils';
 import { styles } from './styles';
+
+const AVAILABILITY_COOLDOWN_MS = 60 * 60 * 1000;
+
+const getRequestTime = (request) => {
+  const value = request?.updatedAt || request?.createdAt;
+  const time = value ? new Date(value).getTime() : 0;
+  return Number.isNaN(time) ? 0 : time;
+};
+
+const isSameLocalDay = (firstTime, secondTime) => {
+  if (!firstTime || !secondTime) return false;
+
+  const first = new Date(firstTime);
+  const second = new Date(secondTime);
+
+  return (
+    first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth() &&
+    first.getDate() === second.getDate()
+  );
+};
+
+const getAvailabilityState = (request, now) => {
+  const status = request?.status;
+  const requestTime = getRequestTime(request);
+
+  if (status === 'hired' && isSameLocalDay(requestTime, now)) {
+    return {
+      canPress: false,
+      hideButton: true,
+      label: 'Hired for Work',
+      subtitle: `Direct hire confirmed for ${request.workDetails?.location || 'your work site'}.`,
+      blockedMessage: 'Aap aaj ke liye hire ho chuke hain. Kal phir available mark kar sakte hain.',
+    };
+  }
+
+  if (status === 'available') {
+    const remainingMs = Math.max(AVAILABILITY_COOLDOWN_MS - (now - requestTime), 0);
+
+    if (remainingMs > 0) {
+      const remainingMinutes = Math.max(Math.ceil(remainingMs / 60000), 1);
+
+      return {
+        canPress: false,
+        hideButton: false,
+        label: 'Available Now',
+        subtitle: `You are visible for direct hire. Try again after ${remainingMinutes} min if not hired.`,
+        blockedMessage: `Aap already available hain. ${remainingMinutes} minute baad dobara try kar sakte hain.`,
+      };
+    }
+  }
+
+  return {
+    canPress: true,
+    hideButton: false,
+    label: 'Mark Available',
+    subtitle: 'Mark yourself available for direct hire without waiting for a posted job.',
+    blockedMessage: '',
+  };
+};
 
 const skillEditorCopy = {
   en: {
@@ -141,6 +201,7 @@ export function LabourDashboard({
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availabilityRequest, setAvailabilityRequest] = useState(null);
+  const [availabilityNow, setAvailabilityNow] = useState(Date.now());
   const [skillForm, setSkillForm] = useState({
     skillId: null,
     name: '',
@@ -148,6 +209,19 @@ export function LabourDashboard({
     level: '',
     notes: '',
   });
+
+  const availabilityState = useMemo(
+    () => getAvailabilityState(availabilityRequest, availabilityNow),
+    [availabilityRequest, availabilityNow]
+  );
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setAvailabilityNow(Date.now());
+    }, 60000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     if (
@@ -496,8 +570,8 @@ export function LabourDashboard({
       return;
     }
 
-    if (availabilityRequest?.status === 'hired') {
-      Alert.alert('Already hired', 'Aapko direct hire work assign ho chuka hai.');
+    if (!availabilityState.canPress) {
+      Alert.alert('Please wait', availabilityState.blockedMessage);
       return;
     }
 
@@ -508,6 +582,7 @@ export function LabourDashboard({
         const directNotifications = normalizeDirectHireNotifications(request, 'labour');
 
         setAvailabilityRequest(request);
+        setAvailabilityNow(Date.now());
         setNotifications((prev) => mergeUniqueNotifications(directNotifications, prev));
         Alert.alert('Available', request.notification || 'You are now available for direct hire.');
       } catch (loadError) {
@@ -642,26 +717,19 @@ export function LabourDashboard({
           <View style={styles.textWrap}>
             <Text style={styles.todayTitle}>{text.todayWorkButton}</Text>
             <Text style={styles.todaySubtitle}>
-              {availabilityRequest?.status === 'hired'
-                ? `Direct hire confirmed for ${availabilityRequest.workDetails.location || 'your work site'}.`
-                : availabilityRequest?.status === 'available'
-                  ? 'You are visible for direct hire. Customers can contact and hire you.'
-                  : 'Mark yourself available for direct hire without waiting for a posted job.'}
+              {availabilityState.subtitle}
             </Text>
           </View>
         </View>
 
-        <PrimaryButton
-          loading={availabilityLoading}
-          label={
-            availabilityRequest?.status === 'hired'
-                ? 'Hired for Work'
-                : availabilityRequest?.status === 'available'
-                  ? 'Available Now'
-                  : 'Mark Available'
-          }
-          onPress={handleTodayWork}
-        />
+        {!availabilityState.hideButton ? (
+          <PrimaryButton
+            loading={availabilityLoading}
+            disabled={!availabilityState.canPress}
+            label={availabilityState.label}
+            onPress={handleTodayWork}
+          />
+        ) : null}
       </View>
 
       {(notificationsLoading || notifications.length > 0) && (
