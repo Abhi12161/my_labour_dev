@@ -49,7 +49,7 @@ export function RoleSelectionScreen({ language, onChangeLanguage, onSelectRole }
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
            <Text style={styles.logo}>💼</Text>
-          <Text style={styles.appName}>{location.fullData?.address?.city}{text.badge}</Text>
+          <Text style={styles.appName}>{location.fullData?.city}{text.badge}</Text>
 
           <LanguageSwitcher
             selected={language}
@@ -102,7 +102,7 @@ export function RoleSelectionScreen({ language, onChangeLanguage, onSelectRole }
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             {text.allCitiesAvailable || 'Available in your area'}
-            {location.fullData?.address?.city}
+            {location.fullData?.city}
           </Text>
           <Text style={styles.footerSubtext}>
             {text.footerBenefits ||

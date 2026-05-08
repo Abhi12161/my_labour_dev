@@ -15,7 +15,7 @@ import { fetchLocation } from '../store/locationSlice';
 export function LocationCard({ text }) {
   const dispatch = useDispatch();
 
-  const { status, coords, name, error } = useSelector(
+  const { status, coords, name, error, fullData } = useSelector(
     (state) => state.location
   );
   const locationState = useSelector((state) => state.location);
@@ -23,7 +23,7 @@ export function LocationCard({ text }) {
   const latitude = coords?.latitude;
   const longitude = coords?.longitude;
 
-  const locationName = error ? error : name;
+  const locationName = fullData?.formattedAddress;
   const loadingLocation = status === 'loading';
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -81,9 +81,10 @@ export function LocationCard({ text }) {
           <ActivityIndicator size="small" color="#4f46e5" />
         ) : (
           <Text style={{ fontSize: 10 }}>
-  {JSON.stringify(locationState, null, 2)}
-</Text>
-          
+            {/* {JSON.stringify(locationState, null, 2)} */}
+            {locationName || text?.locationUnavailable || 'Location unavailable'}
+          </Text>
+
         )}
       </View>
 
