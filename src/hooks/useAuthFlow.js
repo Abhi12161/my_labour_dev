@@ -50,6 +50,10 @@ export function useAuthFlow(language, initialRole = 'customer') {
         return dispatch(setError('Address is required'));
       }
 
+      if (!activeForm.city.trim()) {
+        return dispatch(setError('City is required'));
+      }
+
       if (activeForm.profileImage && !/^https?:\/\//i.test(activeForm.profileImage.trim())) {
         return dispatch(setError('Profile image must be a valid URL'));
       }

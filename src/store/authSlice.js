@@ -9,6 +9,7 @@ const createInitialLoginForm = () => ({
 const createInitialSignupForm = () => ({
   name: '',
   mobile: '',
+  city: '',
   address: '',
   bio: '',
   profileImage: '',
@@ -51,6 +52,7 @@ const normalizeUser = ({ authMode, response, loginForm, signupForm }) => {
       response.address ||
       signupForm.address ||
       'Not provided',
+    city: responseUser.city || response.city || signupForm.city || '',
     bio: responseUser.bio || response.bio || signupForm.bio || '',
     profileImage:
       responseUser.profileImage ||

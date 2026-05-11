@@ -399,12 +399,12 @@ export function CustomerDashboard({
               placeholder="Bio"
               multiline
             />
-            <TextInput
+            {/* <TextInput
               style={localStyles.input}
               value={editedProfile.profileImage || ''}
               onChangeText={(value) => setEditedProfile((current) => ({ ...current, profileImage: value }))}
               placeholder="Profile image URL"
-            />
+            /> */}
             <Pressable style={localStyles.primaryAction} onPress={handleSaveProfile} disabled={updateStatus === 'loading'}>
               <Text style={localStyles.primaryActionText}>
                 {updateStatus === 'loading' ? 'Saving...' : text.save}
@@ -415,9 +415,9 @@ export function CustomerDashboard({
           <View style={{ gap: 8 }}>
             <Text style={localStyles.profileLine}>{customerProfile?.address || 'Address not added yet'}</Text>
             <Text style={localStyles.profileLine}>{customerProfile?.bio || 'Bio not added yet'}</Text>
-            <Text style={localStyles.profileLine}>
+            {/* <Text style={localStyles.profileLine}>
               {customerProfile?.profileImage || 'Profile image URL not added yet'}
-            </Text>
+            </Text> */}
           </View>
         )}
       </View>
@@ -431,7 +431,7 @@ export function CustomerDashboard({
             icon={customerStatStyles[item.id]?.icon}
             trend={customerStatStyles[item.id]?.trend}
             gradient={customerStatStyles[item.id]?.gradient}
-            onPress={() => {}}
+            onPress={() => { }}
             compact
           />
         ))}
@@ -491,66 +491,66 @@ export function CustomerDashboard({
           {applicationsError ? <Text style={{ color: '#d14343' }}>{applicationsError}</Text> : null}
           {!applicationsLoading && applications.length
             ? applications.map((application) => (
-                <View key={application.id} style={{ gap: 8 }}>
-                  <View style={localStyles.applicationMetaCard}>
-                    <Text style={localStyles.applicationJobTitle}>{application.job.title}</Text>
-                    <Text style={localStyles.applicationJobMeta}>
-                      {application.job.location} • {application.status}
-                    </Text>
-                  </View>
-                  <Pressable
-                    style={localStyles.applicantProfileCard}
-                    onPress={() => setSelectedApplication(application)}
-                  >
-                    <Text style={localStyles.applicantProfileTitle}>{application.labour.name}</Text>
-                    <Text style={localStyles.applicantProfileMeta}>
-                      Phone: {application.labour.mobile}
-                    </Text>
-                    <Text style={localStyles.applicantProfileMeta}>
-                      Address: {application.labour.address}
-                    </Text>
-                    <Text style={localStyles.applicantProfileMeta}>
-                      Applied on: {new Date(application.appliedAt).toLocaleString()}
-                    </Text>
-                    {application.labour.bio ? (
-                      <Text style={localStyles.applicantProfileBio}>{application.labour.bio}</Text>
-                    ) : null}
-                    <View style={localStyles.applicantSkillRow}>
-                      {(application.labour.skills?.length
-                        ? application.labour.skills
-                        : [application.job.skill]
-                      ).slice(0, 4).map((skill, index) => (
-                        <View
-                          key={`${application.id}-${getSkillLabel(skill, application.job.skill)}-${index}`}
-                          style={localStyles.applicantSkillChip}
-                        >
-                          <Text style={localStyles.applicantSkillText}>
-                            {getSkillLabel(skill, application.job.skill)}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                    <Text style={localStyles.viewProfileLink}>Tap to view full profile</Text>
-                  </Pressable>
-                  <LabourCard
-                    copy={text}
-                    labour={mapApplicationToLabourCard(application)}
-                    actionLabel={
-                      application.status === 'hired'
-                        ? 'Hired'
-                        : hiringApplicationId === application.id
-                          ? 'Hiring...'
-                          : text.hireNow
-                    }
-                    onActionPress={
-                      application.status === 'hired'
-                        ? undefined
-                        : () => handleHireLabour(application)
-                    }
-                    disabled={application.status === 'hired' || hiringApplicationId === application.id}
-                  />
+              <View key={application.id} style={{ gap: 8 }}>
+                <View style={localStyles.applicationMetaCard}>
+                  <Text style={localStyles.applicationJobTitle}>{application.job.title}</Text>
+                  <Text style={localStyles.applicationJobMeta}>
+                    {application.job.location} • {application.status}
+                  </Text>
                 </View>
-              ))
+                <Pressable
+                  style={localStyles.applicantProfileCard}
+                  onPress={() => setSelectedApplication(application)}
+                >
+                  <Text style={localStyles.applicantProfileTitle}>{application.labour.name}</Text>
+                  <Text style={localStyles.applicantProfileMeta}>
+                    Phone: {application.labour.mobile}
+                  </Text>
+                  <Text style={localStyles.applicantProfileMeta}>
+                    Address: {application.labour.address}
+                  </Text>
+                  <Text style={localStyles.applicantProfileMeta}>
+                    Applied on: {new Date(application.appliedAt).toLocaleString()}
+                  </Text>
+                  {application.labour.bio ? (
+                    <Text style={localStyles.applicantProfileBio}>{application.labour.bio}</Text>
+                  ) : null}
+                  <View style={localStyles.applicantSkillRow}>
+                    {(application.labour.skills?.length
+                      ? application.labour.skills
+                      : [application.job.skill]
+                    ).slice(0, 4).map((skill, index) => (
+                      <View
+                        key={`${application.id}-${getSkillLabel(skill, application.job.skill)}-${index}`}
+                        style={localStyles.applicantSkillChip}
+                      >
+                        <Text style={localStyles.applicantSkillText}>
+                          {getSkillLabel(skill, application.job.skill)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Text style={localStyles.viewProfileLink}>Tap to view full profile</Text>
+                </Pressable>
+                <LabourCard
+                  copy={text}
+                  labour={mapApplicationToLabourCard(application)}
+                  actionLabel={
+                    application.status === 'hired'
+                      ? 'Hired'
+                      : hiringApplicationId === application.id
+                        ? 'Hiring...'
+                        : text.hireNow
+                  }
+                  onActionPress={
+                    application.status === 'hired'
+                      ? undefined
+                      : () => handleHireLabour(application)
+                  }
+                  disabled={application.status === 'hired' || hiringApplicationId === application.id}
+                />
+              </View>
+            ))
             : null}
           {!applicationsLoading && !applications.length ? (
             <View style={styles.emptyCard}>
@@ -730,7 +730,7 @@ export function CustomerDashboard({
                   localStyles.sheetHireButton,
                   (selectedApplication?.status === 'hired' ||
                     hiringApplicationId === selectedApplication?.id) &&
-                    localStyles.sheetHireButtonDisabled,
+                  localStyles.sheetHireButtonDisabled,
                 ]}
                 disabled={
                   selectedApplication?.status === 'hired' ||
