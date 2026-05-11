@@ -333,6 +333,7 @@ export function CustomerDashboard({
             <View style={styles.heroAvatarCircle}>
               <Text style={styles.heroAvatarLetter}>
                 {(customerProfile?.name || session?.user?.name || 'A').charAt(0).toUpperCase()}
+                
               </Text>
             </View>
             <View style={styles.heroAvatarEdit}>
@@ -342,18 +343,18 @@ export function CustomerDashboard({
         </View>
 
         <View style={styles.contactCard}>
-          <View style={styles.contactRow}>
-            <Ionicons name="mail-outline" size={12} color="#ffffff" />
-            <Text style={styles.contactText}>
-              {customerProfile?.email || session?.user?.email || 'Not provided'}
-            </Text>
-          </View>
+          
           <View style={styles.contactRow}>
             <Ionicons name="call-outline" size={12} color="#ffffff" />
             <Text style={styles.contactText}>
               {customerProfile?.mobile || customerProfile?.phone || session?.user?.phone || 'Not provided'}
             </Text>
           </View>
+          <View style={styles.contactRow}>
+            <Ionicons name="mail-outline" size={12} color="#ffffff" />
+            <Text style={styles.contactText}>{customerProfile?.address || customerProfile?.location}</Text>
+          </View>
+
         </View>
       </View>
 

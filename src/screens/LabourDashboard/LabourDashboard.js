@@ -497,7 +497,7 @@ export function LabourDashboard({
             <Text style={styles.heroHello}>{text.hello},</Text>
             <Text style={styles.heroName}>{labourAccountProfile?.name || session?.user?.name || 'User'}</Text>
 
-            <Text style={styles.heroSubtitle}>{text.customerSubtitle}</Text>
+            <Text style={styles.heroSubtitle}>{text.labourSubtitle}</Text>
           </View>
 
           <View style={styles.heroAvatarWrap}>
