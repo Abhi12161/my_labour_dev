@@ -289,6 +289,9 @@ export function LabourDashboard({
     '';
 
   const matchedJobs = jobs.filter((job) => isMatchingLocation(job.location || job.city, labourLocation));
+  console.log('Matched jobs based on location:', matchedJobs);
+  console.log('Labour location:', labourLocation);
+
 
   const handleSaveProfile = async () => {
     const result = await dispatch(

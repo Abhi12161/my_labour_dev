@@ -22,6 +22,7 @@ function extractJobsPayload(response) {
 
 function normalizeJob(job, index = 0) {
   const city = job?.city || job?.location || 'Muzaffarpur';
+  const location = job?.location || city;
   const title = job?.title || 'Untitled Job';
   const description = job?.description || '';
   const skill = job?.skill || job?.category || 'General';
@@ -30,7 +31,7 @@ function normalizeJob(job, index = 0) {
   return {
     id: String(job?._id || job?.id || `job-${index}`),
     title,
-    location: city,
+    location,
     posted: job?.posted || time,
     applicants: Number(job?.applicants || job?.applicationsCount || 0),
     distance: job?.distance || 'Nearby',

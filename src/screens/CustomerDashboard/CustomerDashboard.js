@@ -42,6 +42,31 @@ const initialFilters = {
   rating: 'All',
 };
 
+const normalizeLocationValue = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9,\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const getLocationTokens = (value) =>
+  normalizeLocationValue(value)
+    .split(',')
+    .flatMap((part) => part.split(' '))
+    .map((part) => part.trim())
+    .filter((part) => part.length > 2);
+
+const isMatchingLocation = (jobLocation, customerLocation) => {
+  const normalizedJobLocation = normalizeLocationValue(jobLocation);
+  const customerTokens = getLocationTokens(customerLocation);
+
+  if (!normalizedJobLocation || !customerTokens.length) {
+    return false;
+  }
+
+  return customerTokens.some((token) => normalizedJobLocation.includes(token));
+};
+
 const getCustomerProfile = (profile, sessionUser) => {
   if (profile?.customer) {
     return profile.customer;
@@ -175,6 +200,7 @@ export function CustomerDashboard({
       isMounted = false;
     };
   }, [session?.token]);
+  console.log('Jobs loading state:', { jobsLoading, jobsError, jobs }); 
 
   useEffect(() => {
     let isMounted = true;
@@ -331,6 +357,21 @@ export function CustomerDashboard({
       search: deferredSearch,
     });
   }, [availableRequests, deferredSearch, filters]);
+
+  const customerLocation =
+    customerProfile?.address ||
+    customerProfile?.city ||
+    session?.user?.address ||
+    session?.user?.city ||
+    '';
+
+  const matchedJobs = useMemo(
+    () =>
+      jobs.filter((job) =>
+        isMatchingLocation(`${job.location || ''}, ${job.city || ''}`, customerLocation)
+      ),
+    [customerLocation, jobs]
+  );
 
   const handleChangeFilter = (field, value) => {
     startTransition(() => {
@@ -837,12 +878,16 @@ export function CustomerDashboard({
         <View style={styles.jobsList}>
           {jobsLoading ? <Text style={{ color: '#6b7c74' }}>Loading jobs...</Text> : null}
           {jobsError ? <Text style={{ color: '#d14343' }}>{jobsError}</Text> : null}
-          {!jobsLoading && jobs.length
-            ? jobs.map((job) => <JobCard key={job.id} copy={text} job={job} />)
+          {!jobsLoading && matchedJobs.length
+            ? matchedJobs.map((job) => <JobCard key={job.id} copy={text} job={job} />)
             : null}
-          {!jobsLoading && !jobs.length ? (
+          {!jobsLoading && !matchedJobs.length ? (
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>No jobs found.</Text>
+              <Text style={styles.emptyText}>
+                {customerLocation
+                  ? `No jobs found for ${customerLocation}.`
+                  : 'Add your location to see matching jobs.'}
+              </Text>
             </View>
           ) : null}
         </View>
