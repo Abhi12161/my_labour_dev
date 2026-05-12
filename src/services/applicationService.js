@@ -102,6 +102,7 @@ function normalizeNotificationEntry(item, entry, index = 0, role = 'labour') {
 
   return {
     id: String(entry?._id || `${item?._id || item?.id || 'notification'}-${index}`),
+    jobId: String(job?._id || job?.id || item?.jobId || ''),
     type,
     status,
     statusLabel: type,

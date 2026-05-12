@@ -114,6 +114,21 @@ const mapDirectRequestToLabourCard = (request) => ({
 const getSkillLabel = (skill, fallback = 'General') =>
   typeof skill === 'string' ? skill : skill?.name || fallback;
 
+const dedupeApplicationsByMobile = (applications) => {
+  const seen = new Map();
+
+  applications.forEach((application) => {
+    const key = `${application.job.id}|${application.labour.mobile}`;
+    const existing = seen.get(key);
+
+    if (!existing || new Date(application.appliedAt) > new Date(existing.appliedAt)) {
+      seen.set(key, application);
+    }
+  });
+
+  return Array.from(seen.values());
+};
+
 export function CustomerDashboard({
   language,
   onLogout,
@@ -225,7 +240,7 @@ export function CustomerDashboard({
         const fetchedApplications = await fetchCustomerApplications(session.token);
 
         if (isMounted) {
-          setApplications(fetchedApplications);
+          setApplications(dedupeApplicationsByMobile(fetchedApplications));
         }
       } catch (loadError) {
         if (isMounted) {
@@ -457,7 +472,9 @@ export function CustomerDashboard({
       const refreshedNotifications = await fetchCustomerNotifications(session.token);
 
       setApplications((current) =>
-        current.map((item) => (item.id === updatedApplication.id ? updatedApplication : item))
+        dedupeApplicationsByMobile(
+          current.map((item) => (item.id === updatedApplication.id ? updatedApplication : item))
+        )
       );
       setNotifications(refreshedNotifications);
       Alert.alert('Success', `${updatedApplication.labour.name} has been hired successfully.`);

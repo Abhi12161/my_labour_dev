@@ -115,6 +115,17 @@ const getLabourProfile = (profile, sessionUser, sessionToken) => {
   return sessionToken === 'demo-session' ? labourProfile : {};
 };
 
+const isSameDate = (left, right) => {
+  const leftDate = new Date(left);
+  const rightDate = new Date(right);
+
+  return (
+    leftDate.getFullYear() === rightDate.getFullYear() &&
+    leftDate.getMonth() === rightDate.getMonth() &&
+    leftDate.getDate() === rightDate.getDate()
+  );
+};
+
 export function LabourDashboard({
   language,
   onLogout,
@@ -238,6 +249,16 @@ export function LabourDashboard({
         if (isMounted) {
           setAvailabilityRequest(myAvailability);
           setNotifications(mergeUniqueNotifications(fetchedNotifications, directNotifications));
+          setAppliedJobs(
+            fetchedNotifications
+              .filter(
+                (notification) =>
+                  notification.jobId &&
+                  ['applied', 'hired', 'accepted'].includes(notification.status) &&
+                  isSameDate(notification.timestamp, new Date())
+              )
+              .map((notification) => notification.jobId)
+          );
         }
       } catch (notificationError) {
         if (isMounted) {
@@ -427,7 +448,7 @@ export function LabourDashboard({
   }
 
   if (appliedJobs.includes(job.id)) {
-    Alert.alert(text.alreadyAppliedTitle, text.alreadyAppliedMessage);
+    Alert.alert(text.alreadyAppliedTitle, 'Aaj aap is job par already apply kar chuke hain.');
     return;
   }
 
