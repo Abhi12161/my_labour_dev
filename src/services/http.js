@@ -3,14 +3,15 @@ import { API_BASE_URL } from '../config/env';
 export async function apiRequest(path, options = {}) {
   try {
     const { token, ...requestOptions } = options;
+    const mergedHeaders = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(requestOptions.headers || {}),
+    };
 
     const response = await fetch(`${API_BASE_URL}${path}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(requestOptions.headers || {}),
-      },
       ...requestOptions,
+      headers: mergedHeaders,
     });
 
     const raw = await response.text();

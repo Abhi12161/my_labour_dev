@@ -100,11 +100,13 @@ export function normalizeNotification(item, index = 0) {
 }
 
 export async function applyToJob(jobId, token) {
-  const response = await apiRequest(`/job-applications/apply/${jobId}`, {
+  const response = await apiRequest('/job-applications/apply', {
     method: 'POST',
-    token,
+    body: JSON.stringify({ jobId }),
+    ...(token ? { token } : {}),
   });
 
+  // Normalize and return the application object
   return normalizeApplication(
     response?.application || response?.data || response?.result || response
   );

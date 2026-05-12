@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -24,12 +25,12 @@ import {
   labourWorkHistory,
 } from '../../data/dashboardData';
 import {
-  saveTodayWorkRequest,
-} from '../../services/http';
-import {
   applyToJob,
   fetchLabourNotifications,
 } from '../../services/applicationService';
+import {
+  saveTodayWorkRequest,
+} from '../../services/http';
 import { fetchJobs } from '../../services/jobService';
 import {
   createSkill,
@@ -389,41 +390,57 @@ export function LabourDashboard({
     Alert.alert('Error', result.payload || 'Failed to delete skill.');
   };
 
-  const handleApplyForJob = (job) => {
-    if (!session?.token || session.token === 'demo-session') {
-      Alert.alert('Login required', 'Please login with a labour account to apply for jobs.');
-      return;
+ const handleApplyForJob = (job) => {
+  console.log('Attempting to apply for job', job);
+  console.log('Current session', session);
+
+  if (!session?.token || session.token === 'demo-session') {
+    Alert.alert('Login required', 'Please login with a labour account to apply for jobs.');
+    return;
+  }
+
+  if (appliedJobs.includes(job.id)) {
+    Alert.alert(text.alreadyAppliedTitle, text.alreadyAppliedMessage);
+    return;
+  }
+
+  // Function to handle the actual API call
+  const confirmApply = async () => {
+    try {
+      // Optimistic UI: mark job as applied
+      setAppliedJobs((prev) => [...prev, job.id]);
+
+      // Call the fixed applyToJob function (jobId in JSON body)
+      await applyToJob(job.id, session.token);
+
+      // Refresh notifications after applying
+      const fetchedNotifications = await fetchLabourNotifications(session.token);
+      setNotifications(fetchedNotifications);
+
+      Alert.alert(text.applicationSuccessTitle, text.applicationSuccessMessage);
+    } catch (err) {
+      console.error('Apply job error:', err);
+
+      // Revert appliedJobs state if API fails
+      setAppliedJobs((prev) => prev.filter((id) => id !== job.id));
+      Alert.alert('Error', 'Failed to submit application. Please try again.');
     }
-
-    if (appliedJobs.includes(job.id)) {
-      Alert.alert(text.alreadyAppliedTitle, text.alreadyAppliedMessage);
-      return;
-    }
-
-    Alert.alert(
-      text.applyConfirmTitle,
-      text.applyConfirmMessage.replace('{job}', job.title),
-      [
-        { text: text.cancel, style: 'cancel' },
-        {
-          text: text.apply,
-          onPress: async () => {
-            try {
-              setAppliedJobs((prev) => [...prev, job.id]);
-              await applyToJob(job.id, session.token);
-
-              const fetchedNotifications = await fetchLabourNotifications(session.token);
-              setNotifications(fetchedNotifications);
-              Alert.alert(text.applicationSuccessTitle, text.applicationSuccessMessage);
-            } catch {
-              setAppliedJobs((prev) => prev.filter((id) => id !== job.id));
-              Alert.alert('Error', 'Failed to submit application. Please try again.');
-            }
-          },
-        },
-      ]
-    );
   };
+
+  if (Platform.OS === 'web') {
+    confirmApply();
+    return;
+  }
+
+  Alert.alert(
+    text.applyConfirmTitle,
+    text.applyConfirmMessage.replace('{job}', job.title),
+    [
+      { text: text.cancel, style: 'cancel' },
+      { text: text.apply, onPress: confirmApply },
+    ]
+  );
+};
 
   const handleTodayWork = async () => {
     Alert.alert(text.todayWorkConfirmTitle, text.todayWorkConfirmMessage, [
