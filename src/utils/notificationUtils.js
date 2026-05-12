@@ -1,12 +1,13 @@
 function getNotificationKey(notification) {
   return [
-    notification.id || '',
-    notification.source || '',
     notification.status || '',
     notification.statusLabel || '',
     notification.message || '',
     notification.timestamp || '',
+    notification.jobTitle || '',
+    notification.jobLocation || '',
     notification.actorName || '',
+    notification.actorMobile || '',
   ].join('|');
 }
 

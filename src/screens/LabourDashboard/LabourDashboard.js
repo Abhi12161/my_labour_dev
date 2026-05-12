@@ -201,9 +201,11 @@ export function LabourDashboard({
     };
 
     loadJobs();
+    const intervalId = setInterval(loadJobs, 8000);
 
     return () => {
       isMounted = false;
+      clearInterval(intervalId);
     };
   }, [postedJobs, session?.token]);
 
@@ -282,13 +284,20 @@ export function LabourDashboard({
       )
     : [];
 
-  const labourLocation =
-    labourAccountProfile?.address ||
-    labourAccountProfile?.location ||
-    session?.user?.address ||
-    '';
+  const labourLocation = [
+    labourAccountProfile?.address,
+    labourAccountProfile?.location,
+    labourAccountProfile?.city,
+    session?.user?.address,
+    session?.user?.location,
+    session?.user?.city,
+  ]
+    .filter(Boolean)
+    .join(', ');
 
-  const matchedJobs = jobs.filter((job) => isMatchingLocation(job.location || job.city, labourLocation));
+  const matchedJobs = jobs.filter((job) =>
+    isMatchingLocation(`${job.location || ''}, ${job.city || ''}`, labourLocation)
+  );
   console.log('Matched jobs based on location:', matchedJobs);
   console.log('Labour location:', labourLocation);
 

@@ -1,5 +1,5 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -10,8 +10,10 @@ import {
   View,
 } from 'react-native';
 
+import { fetchCities } from '../services/authService';
 import { colors } from '../theme/tokens';
 import { PrimaryButton } from './PrimaryButton';
+import { SelectField } from './SelectField';
 
 const initialForm = {
   title: '',
@@ -63,6 +65,41 @@ export function JobPostModal({
   const [form, setForm] = useState(initialForm);
   const [showPicker, setShowPicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+ const [cityOptions, setCityOptions] = useState([]);
+  const [cityError, setCityError] = useState('');
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCities = async () => {
+      try {
+        setCityError('');
+        const cities = await fetchCities();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setCityOptions(cities);
+      } catch (loadError) {
+        if (!isMounted) {
+          return;
+        }
+
+        setCityOptions([]);
+        setCityError(loadError.message || 'Unable to load cities');
+      }
+    };
+
+    loadCities();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+  const mappedCityOptions = useMemo(
+    () => cityOptions.map((city) => ({ label: city, value: city })),
+    [cityOptions]
+  );
 
   useEffect(() => {
     if (visible) {
@@ -137,11 +174,23 @@ export function JobPostModal({
               />
             </View>
 
-            <OptionGroup
+            {/* <OptionGroup
               label={copy.locationLabel}
               options={options.cities}
               value={form.city}
               onChange={(value) => updateField('city', value)}
+            /> */}
+
+            <SelectField
+              label="City"
+              options={mappedCityOptions}
+              placeholder={cityError || 'Select city'}
+              value={form.city}
+              onValueChange={(value) => {
+                updateField('city', value);
+                
+              }}
+              // shellStyle={errorShellStyle}
             />
 
             <OptionGroup
