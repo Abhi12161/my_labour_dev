@@ -22,6 +22,12 @@ import {
   fetchCustomerNotifications,
   hireApplication,
 } from '../../services/applicationService';
+import {
+  directHireLabour,
+  fetchAvailableLabourRequests,
+  fetchNearbyLabourRequests,
+  normalizeDirectHireNotifications,
+} from '../../services/directHireService';
 import { createJob, fetchJobs } from '../../services/jobService';
 import { fetchProfile, saveProfile } from '../../store/profileSlice';
 import { filterJobs } from '../../utils/filterJobs';
@@ -62,6 +68,23 @@ const mapApplicationToLabourCard = (application) => ({
   photoLabel: (application.labour.name || 'L').charAt(0).toUpperCase(),
 });
 
+const mapDirectRequestToLabourCard = (request) => ({
+  id: request.id,
+  name: request.labour.name,
+  primarySkill:
+    request.labour.skills?.[0]?.name || request.labour.skills?.[0] || 'General',
+  skills: (request.labour.skills?.length ? request.labour.skills : ['General']).map((skill) =>
+    typeof skill === 'string' ? skill : skill?.name || 'General'
+  ),
+  rating: request.labour.rating || 0,
+  reviews: 0,
+  distance: request.city || 'Nearby',
+  location: request.labour.address,
+  availability: request.statusLabel,
+  photoLabel: (request.labour.name || 'L').charAt(0).toUpperCase(),
+  requestId: request.id,
+});
+
 const getSkillLabel = (skill, fallback = 'General') =>
   typeof skill === 'string' ? skill : skill?.name || fallback;
 
@@ -94,6 +117,16 @@ export function CustomerDashboard({
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [availableRequests, setAvailableRequests] = useState([]);
+  const [availableRequestsLoading, setAvailableRequestsLoading] = useState(false);
+  const [availableRequestsError, setAvailableRequestsError] = useState('');
+  const [selectedDirectRequest, setSelectedDirectRequest] = useState(null);
+  const [directHireForm, setDirectHireForm] = useState({
+    location: '',
+    timing: '',
+    notes: '',
+  });
+  const [directHiringRequestId, setDirectHiringRequestId] = useState('');
   const deferredSearch = useDeferredValue(filters.search);
 
   useEffect(() => {
@@ -241,25 +274,58 @@ export function CustomerDashboard({
     };
   }, [session?.role, session?.token]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadAvailableRequests = async () => {
+      const shouldUseApiRequests =
+        Boolean(session?.token) &&
+        session.token !== 'demo-session' &&
+        session?.role === 'customer';
+
+      if (!shouldUseApiRequests) {
+        setAvailableRequests([]);
+        setAvailableRequestsLoading(false);
+        setAvailableRequestsError('');
+        return;
+      }
+
+      setAvailableRequestsLoading(true);
+      setAvailableRequestsError('');
+
+      try {
+        const city = customerProfile?.city?.trim();
+        const requests = city
+          ? await fetchNearbyLabourRequests(session.token, city)
+          : await fetchAvailableLabourRequests(session.token);
+
+        if (isMounted) {
+          setAvailableRequests(requests);
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setAvailableRequestsError(loadError.message || 'Failed to load available labour.');
+        }
+      } finally {
+        if (isMounted) {
+          setAvailableRequestsLoading(false);
+        }
+      }
+    };
+
+    loadAvailableRequests();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [customerProfile?.city, session?.role, session?.token]);
+
   const filteredLabours = useMemo(() => {
-    const uniqueLabours = applications.reduce((collection, application) => {
-      if (!application?.labour?.id) {
-        return collection;
-      }
-
-      if (collection.some((labour) => labour.id === application.labour.id)) {
-        return collection;
-      }
-
-      collection.push(mapApplicationToLabourCard(application));
-      return collection;
-    }, []);
-
-    return filterJobs(uniqueLabours, {
+    return filterJobs(availableRequests.map(mapDirectRequestToLabourCard), {
       ...filters,
       search: deferredSearch,
     });
-  }, [applications, deferredSearch, filters]);
+  }, [availableRequests, deferredSearch, filters]);
 
   const handleChangeFilter = (field, value) => {
     startTransition(() => {
@@ -353,6 +419,57 @@ export function CustomerDashboard({
       Alert.alert('Error', hireError.message || 'Failed to hire labour.');
     } finally {
       setHiringApplicationId('');
+    }
+  };
+
+  const handleOpenDirectHire = (request) => {
+    setSelectedDirectRequest(request);
+    setDirectHireForm({
+      location: customerProfile?.address || customerProfile?.city || '',
+      timing: '',
+      notes: '',
+    });
+  };
+
+  const closeDirectHireSheet = () => {
+    setSelectedDirectRequest(null);
+    setDirectHireForm({
+      location: '',
+      timing: '',
+      notes: '',
+    });
+    setDirectHiringRequestId('');
+  };
+
+  const handleDirectHire = async () => {
+    if (!selectedDirectRequest) {
+      return;
+    }
+
+    if (!directHireForm.location.trim()) {
+      Alert.alert('Error', 'Location is required for direct hire.');
+      return;
+    }
+
+    try {
+      setDirectHiringRequestId(selectedDirectRequest.id);
+      const hiredRequest = await directHireLabour(selectedDirectRequest.id, directHireForm, session.token);
+      const directNotifications = normalizeDirectHireNotifications(hiredRequest, 'customer');
+
+      setAvailableRequests((current) =>
+        current.filter((request) => request.id !== hiredRequest.id)
+      );
+      setNotifications((current) =>
+        [...directNotifications, ...current].sort(
+          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+        )
+      );
+      closeDirectHireSheet();
+      Alert.alert('Success', `${hiredRequest.labour.name} has been directly hired.`);
+    } catch (hireError) {
+      Alert.alert('Error', hireError.message || 'Failed to directly hire labour.');
+    } finally {
+      setDirectHiringRequestId('');
     }
   };
 
@@ -533,12 +650,31 @@ export function CustomerDashboard({
         </View>
 
         <View style={styles.jobsList}>
-          {applicationsLoading ? <Text style={{ color: '#6b7c74' }}>Loading labour list...</Text> : null}
+          {availableRequestsLoading ? <Text style={{ color: '#6b7c74' }}>Loading available labour...</Text> : null}
+          {availableRequestsError ? <Text style={{ color: '#d14343' }}>{availableRequestsError}</Text> : null}
           {filteredLabours.length ? (
-            filteredLabours.map((labour) => <LabourCard key={labour.id} copy={text} labour={labour} />)
+            filteredLabours.map((labour) => (
+              <LabourCard
+                key={labour.id}
+                copy={text}
+                labour={labour}
+                actionLabel={
+                  directHiringRequestId === labour.requestId
+                    ? 'Hiring...'
+                    : 'Direct Hire'
+                }
+                onActionPress={() => {
+                  const request = availableRequests.find((item) => item.id === labour.requestId);
+                  if (request) {
+                    handleOpenDirectHire(request);
+                  }
+                }}
+                disabled={directHiringRequestId === labour.requestId}
+              />
+            ))
           ) : (
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>No live labour found from applications yet.</Text>
+              <Text style={styles.emptyText}>No direct available labour found right now.</Text>
             </View>
           )}
         </View>
@@ -856,6 +992,114 @@ export function CustomerDashboard({
                     : hiringApplicationId === selectedApplication?.id
                       ? 'Hiring...'
                       : text.hireNow}
+                </Text>
+              </Pressable>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={Boolean(selectedDirectRequest)}
+        onRequestClose={closeDirectHireSheet}
+      >
+        <View style={localStyles.sheetOverlay}>
+          <View style={localStyles.sheetCard}>
+            <View style={localStyles.sheetHeader}>
+              <View>
+                <Text style={localStyles.sheetTitle}>Direct Hire Labour</Text>
+                <Text style={localStyles.sheetSubtitle}>
+                  {selectedDirectRequest?.labour?.name || 'Available labour'}
+                </Text>
+              </View>
+              <Pressable style={localStyles.sheetCloseButton} onPress={closeDirectHireSheet}>
+                <Text style={localStyles.sheetCloseText}>Close</Text>
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={localStyles.sheetContent}>
+              <View style={localStyles.sheetHero}>
+                <View style={localStyles.sheetAvatar}>
+                  <Text style={localStyles.sheetAvatarText}>
+                    {(selectedDirectRequest?.labour?.name || 'L').charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={localStyles.sheetName}>{selectedDirectRequest?.labour?.name}</Text>
+                  <Text style={localStyles.sheetMeta}>
+                    City: {selectedDirectRequest?.city || selectedDirectRequest?.labour?.city || 'Not provided'}
+                  </Text>
+                  <Text style={localStyles.sheetMeta}>
+                    Status: {selectedDirectRequest?.statusLabel || 'Available'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={localStyles.sheetInfoCard}>
+                <Text style={localStyles.sheetSectionTitle}>Contact</Text>
+                <Text style={localStyles.sheetInfoText}>
+                  Phone: {selectedDirectRequest?.labour?.mobile || 'Not provided'}
+                </Text>
+                <Text style={localStyles.sheetInfoText}>
+                  Address: {selectedDirectRequest?.labour?.address || 'Not provided'}
+                </Text>
+              </View>
+
+              <View style={localStyles.sheetInfoCard}>
+                <Text style={localStyles.sheetSectionTitle}>Work Details</Text>
+                <TextInput
+                  style={localStyles.input}
+                  value={directHireForm.location}
+                  onChangeText={(value) => setDirectHireForm((current) => ({ ...current, location: value }))}
+                  placeholder="Work location"
+                />
+                <TextInput
+                  style={localStyles.input}
+                  value={directHireForm.timing}
+                  onChangeText={(value) => setDirectHireForm((current) => ({ ...current, timing: value }))}
+                  placeholder="Timing"
+                />
+                <TextInput
+                  style={[localStyles.input, localStyles.multilineInput]}
+                  value={directHireForm.notes}
+                  onChangeText={(value) => setDirectHireForm((current) => ({ ...current, notes: value }))}
+                  placeholder="Notes"
+                  multiline
+                />
+              </View>
+
+              <View style={localStyles.sheetInfoCard}>
+                <Text style={localStyles.sheetSectionTitle}>Skills</Text>
+                <View style={localStyles.sheetSkillRow}>
+                  {(selectedDirectRequest?.labour?.skills?.length
+                    ? selectedDirectRequest.labour.skills
+                    : ['General']
+                  ).map((skill, index) => (
+                    <View
+                      key={`direct-sheet-${getSkillLabel(skill, 'General')}-${index}`}
+                      style={localStyles.sheetSkillChip}
+                    >
+                      <Text style={localStyles.sheetSkillText}>
+                        {getSkillLabel(skill, 'General')}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              <Pressable
+                style={[
+                  localStyles.sheetHireButton,
+                  directHiringRequestId === selectedDirectRequest?.id &&
+                    localStyles.sheetHireButtonDisabled,
+                ]}
+                disabled={directHiringRequestId === selectedDirectRequest?.id}
+                onPress={handleDirectHire}
+              >
+                <Text style={localStyles.sheetHireButtonText}>
+                  {directHiringRequestId === selectedDirectRequest?.id ? 'Hiring...' : 'Confirm Direct Hire'}
                 </Text>
               </Pressable>
             </ScrollView>

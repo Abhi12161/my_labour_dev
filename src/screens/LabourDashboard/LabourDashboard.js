@@ -29,8 +29,10 @@ import {
   fetchLabourNotifications,
 } from '../../services/applicationService';
 import {
-  saveTodayWorkRequest,
-} from '../../services/http';
+  fetchMyAvailability,
+  markLabourAvailable,
+  normalizeDirectHireNotifications,
+} from '../../services/directHireService';
 import { fetchJobs } from '../../services/jobService';
 import {
   createSkill,
@@ -135,6 +137,8 @@ export function LabourDashboard({
   const [jobsLoading, setJobsLoading] = useState(false);
   const [jobsError, setJobsError] = useState('');
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityRequest, setAvailabilityRequest] = useState(null);
   const [skillForm, setSkillForm] = useState({
     skillId: null,
     name: '',
@@ -219,10 +223,22 @@ export function LabourDashboard({
       setNotificationsLoading(true);
 
       try {
-        const fetchedNotifications = await fetchLabourNotifications(session.token);
+        const [fetchedNotifications, myAvailability] = await Promise.all([
+          fetchLabourNotifications(session.token),
+          fetchMyAvailability(session.token).catch(() => null),
+        ]);
+
+        const directNotifications = myAvailability
+          ? normalizeDirectHireNotifications(myAvailability, 'labour')
+          : [];
 
         if (isMounted) {
-          setNotifications(fetchedNotifications);
+          setAvailabilityRequest(myAvailability);
+          setNotifications(
+            [...fetchedNotifications, ...directNotifications].sort(
+              (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+            )
+          );
         }
       } catch (notificationError) {
         if (isMounted) {
@@ -443,30 +459,44 @@ export function LabourDashboard({
 };
 
   const handleTodayWork = async () => {
-    Alert.alert(text.todayWorkConfirmTitle, text.todayWorkConfirmMessage, [
-      { text: text.cancel, style: 'cancel' },
-      {
-        text: text.confirm,
-        onPress: async () => {
-          try {
-            setNotifications((prev) => [
-              {
-                id: Date.now(),
-                type: 'today_work',
-                message: text.todayWorkNotification,
-                timestamp: new Date().toISOString(),
-              },
-              ...prev,
-            ]);
+    if (!session?.token || session.token === 'demo-session') {
+      Alert.alert('Login required', 'Please login with a labour account first.');
+      return;
+    }
 
-            await saveTodayWorkRequest(session.user);
-            Alert.alert(text.todayWorkSuccessTitle, text.todayWorkSuccessMessage);
-          } catch {
-            Alert.alert('Error', 'Failed to submit today work request. Please try again.');
-          }
-        },
-      },
-    ]);
+    const markAvailable = async () => {
+      try {
+        setAvailabilityLoading(true);
+        const request = await markLabourAvailable(session.token);
+        const directNotifications = normalizeDirectHireNotifications(request, 'labour');
+
+        setAvailabilityRequest(request);
+        setNotifications((prev) =>
+          [...directNotifications, ...prev].sort(
+            (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+          )
+        );
+        Alert.alert('Available', request.notification || 'You are now available for direct hire.');
+      } catch (loadError) {
+        Alert.alert('Error', loadError.message || 'Failed to mark you available.');
+      } finally {
+        setAvailabilityLoading(false);
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      markAvailable();
+      return;
+    }
+
+    Alert.alert(
+      'Mark Available',
+      'Customers will be able to directly hire you for urgent work.',
+      [
+        { text: text.cancel, style: 'cancel' },
+        { text: text.confirm, onPress: markAvailable },
+      ]
+    );
   };
 
   const statStyles = {
@@ -578,12 +608,26 @@ export function LabourDashboard({
           <View style={styles.textWrap}>
             <Text style={styles.todayTitle}>{text.todayWorkButton}</Text>
             <Text style={styles.todaySubtitle}>
-              View and manage all your work requests and bookings.
+              {availabilityRequest?.status === 'hired'
+                ? `Direct hire confirmed for ${availabilityRequest.workDetails.location || 'your work site'}.`
+                : availabilityRequest?.status === 'available'
+                  ? 'You are visible for direct hire. Customers can contact and hire you.'
+                  : 'Mark yourself available for direct hire without waiting for a posted job.'}
             </Text>
           </View>
         </View>
 
-        <PrimaryButton label="Apply for Job" onPress={handleTodayWork} />
+        <PrimaryButton
+          loading={availabilityLoading}
+          label={
+            availabilityRequest?.status === 'hired'
+                ? 'Hired for Work'
+                : availabilityRequest?.status === 'available'
+                  ? 'Available Now'
+                  : 'Mark Available'
+          }
+          onPress={handleTodayWork}
+        />
       </View>
 
       {(notificationsLoading || notifications.length > 0) && (
