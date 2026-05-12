@@ -31,6 +31,7 @@ import {
 import { createJob, fetchJobs } from '../../services/jobService';
 import { fetchProfile, saveProfile } from '../../store/profileSlice';
 import { filterJobs } from '../../utils/filterJobs';
+import { mergeUniqueNotifications } from '../../utils/notificationUtils';
 import { styles } from './styles';
 
 const initialFilters = {
@@ -268,9 +269,11 @@ export function CustomerDashboard({
     };
 
     loadNotifications();
+    const intervalId = setInterval(loadNotifications, 8000);
 
     return () => {
       isMounted = false;
+      clearInterval(intervalId);
     };
   }, [session?.role, session?.token]);
 
@@ -314,9 +317,11 @@ export function CustomerDashboard({
     };
 
     loadAvailableRequests();
+    const intervalId = setInterval(loadAvailableRequests, 8000);
 
     return () => {
       isMounted = false;
+      clearInterval(intervalId);
     };
   }, [customerProfile?.city, session?.role, session?.token]);
 
@@ -459,11 +464,7 @@ export function CustomerDashboard({
       setAvailableRequests((current) =>
         current.filter((request) => request.id !== hiredRequest.id)
       );
-      setNotifications((current) =>
-        [...directNotifications, ...current].sort(
-          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-        )
-      );
+      setNotifications((current) => mergeUniqueNotifications(directNotifications, current));
       closeDirectHireSheet();
       Alert.alert('Success', `${hiredRequest.labour.name} has been directly hired.`);
     } catch (hireError) {

@@ -41,6 +41,7 @@ import {
   removeSkill,
   saveProfile,
 } from '../../store/profileSlice';
+import { mergeUniqueNotifications } from '../../utils/notificationUtils';
 import { styles } from './styles';
 
 const skillEditorCopy = {
@@ -234,11 +235,7 @@ export function LabourDashboard({
 
         if (isMounted) {
           setAvailabilityRequest(myAvailability);
-          setNotifications(
-            [...fetchedNotifications, ...directNotifications].sort(
-              (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-            )
-          );
+          setNotifications(mergeUniqueNotifications(fetchedNotifications, directNotifications));
         }
       } catch (notificationError) {
         if (isMounted) {
@@ -263,9 +260,11 @@ export function LabourDashboard({
     };
 
     loadNotifications();
+    const intervalId = setInterval(loadNotifications, 8000);
 
     return () => {
       isMounted = false;
+      clearInterval(intervalId);
     };
   }, [session?.role, session?.token]);
 
@@ -430,8 +429,15 @@ export function LabourDashboard({
       await applyToJob(job.id, session.token);
 
       // Refresh notifications after applying
-      const fetchedNotifications = await fetchLabourNotifications(session.token);
-      setNotifications(fetchedNotifications);
+      const [fetchedNotifications, myAvailability] = await Promise.all([
+        fetchLabourNotifications(session.token),
+        fetchMyAvailability(session.token).catch(() => null),
+      ]);
+      const directNotifications = myAvailability
+        ? normalizeDirectHireNotifications(myAvailability, 'labour')
+        : [];
+      setAvailabilityRequest(myAvailability);
+      setNotifications(mergeUniqueNotifications(fetchedNotifications, directNotifications));
 
       Alert.alert(text.applicationSuccessTitle, text.applicationSuccessMessage);
     } catch (err) {
@@ -471,11 +477,7 @@ export function LabourDashboard({
         const directNotifications = normalizeDirectHireNotifications(request, 'labour');
 
         setAvailabilityRequest(request);
-        setNotifications((prev) =>
-          [...directNotifications, ...prev].sort(
-            (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-          )
-        );
+        setNotifications((prev) => mergeUniqueNotifications(directNotifications, prev));
         Alert.alert('Available', request.notification || 'You are now available for direct hire.');
       } catch (loadError) {
         Alert.alert('Error', loadError.message || 'Failed to mark you available.');
@@ -522,6 +524,7 @@ export function LabourDashboard({
     },
   };
  console.log('LabourDashboard render', { profile, status, error });
+ console.log('Notifications:', notifications);
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.hero}>
