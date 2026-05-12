@@ -11,7 +11,6 @@ import { LabourCard } from '../../components/LabourCard';
 import { StatCard } from '../../components/StatCard';
 import { copy } from '../../constants/copy';
 import {
-  availableLabours,
   customerMessages,
   customerOverviewStats,
   jobPostOptions,
@@ -20,6 +19,7 @@ import {
 } from '../../data/dashboardData';
 import {
   fetchCustomerApplications,
+  fetchCustomerNotifications,
   hireApplication,
 } from '../../services/applicationService';
 import { createJob, fetchJobs } from '../../services/jobService';
@@ -92,6 +92,8 @@ export function CustomerDashboard({
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editedProfile, setEditedProfile] = useState(customerProfile);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
   const deferredSearch = useDeferredValue(filters.search);
 
   useEffect(() => {
@@ -189,12 +191,75 @@ export function CustomerDashboard({
     }
   }, [customerProfile, isEditingProfile]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadNotifications = async () => {
+      const shouldUseApiNotifications =
+        Boolean(session?.token) &&
+        session.token !== 'demo-session' &&
+        session?.role === 'customer';
+
+      if (!shouldUseApiNotifications) {
+        setNotifications([]);
+        setNotificationsLoading(false);
+        return;
+      }
+
+      setNotificationsLoading(true);
+
+      try {
+        const fetchedNotifications = await fetchCustomerNotifications(session.token);
+
+        if (isMounted) {
+          setNotifications(fetchedNotifications);
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setNotifications([
+            {
+              id: 'customer-notification-error',
+              status: 'error',
+              statusLabel: 'Error',
+              message: loadError.message || 'Failed to load notifications.',
+              timestamp: new Date().toISOString(),
+              actorName: 'System',
+            },
+          ]);
+        }
+      } finally {
+        if (isMounted) {
+          setNotificationsLoading(false);
+        }
+      }
+    };
+
+    loadNotifications();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session?.role, session?.token]);
+
   const filteredLabours = useMemo(() => {
-    return filterJobs(availableLabours, {
+    const uniqueLabours = applications.reduce((collection, application) => {
+      if (!application?.labour?.id) {
+        return collection;
+      }
+
+      if (collection.some((labour) => labour.id === application.labour.id)) {
+        return collection;
+      }
+
+      collection.push(mapApplicationToLabourCard(application));
+      return collection;
+    }, []);
+
+    return filterJobs(uniqueLabours, {
       ...filters,
       search: deferredSearch,
     });
-  }, [deferredSearch, filters]);
+  }, [applications, deferredSearch, filters]);
 
   const handleChangeFilter = (field, value) => {
     startTransition(() => {
@@ -277,10 +342,12 @@ export function CustomerDashboard({
     try {
       setHiringApplicationId(application.id);
       const updatedApplication = await hireApplication(application.id, session.token);
+      const refreshedNotifications = await fetchCustomerNotifications(session.token);
 
       setApplications((current) =>
         current.map((item) => (item.id === updatedApplication.id ? updatedApplication : item))
       );
+      setNotifications(refreshedNotifications);
       Alert.alert('Success', `${updatedApplication.labour.name} has been hired successfully.`);
     } catch (hireError) {
       Alert.alert('Error', hireError.message || 'Failed to hire labour.');
@@ -466,15 +533,59 @@ export function CustomerDashboard({
         </View>
 
         <View style={styles.jobsList}>
+          {applicationsLoading ? <Text style={{ color: '#6b7c74' }}>Loading labour list...</Text> : null}
           {filteredLabours.length ? (
             filteredLabours.map((labour) => <LabourCard key={labour.id} copy={text} labour={labour} />)
           ) : (
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>{text.noLabours}</Text>
+              <Text style={styles.emptyText}>No live labour found from applications yet.</Text>
             </View>
           )}
         </View>
       </View>
+
+      {(notificationsLoading || notifications.length > 0) && (
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleWrap}>
+              <Ionicons name="notifications-outline" size={13} color="#0c5a49" />
+              <Text style={styles.sectionTitle}>{text.notificationsTitle}</Text>
+            </View>
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>{notifications.length}</Text>
+            </View>
+          </View>
+
+          <View style={styles.jobsList}>
+            {notificationsLoading ? <Text style={{ color: '#6b7c74' }}>Loading notifications...</Text> : null}
+            {notifications.slice(0, 6).map((notification) => (
+              <View key={notification.id} style={localStyles.notificationCard}>
+                <View style={localStyles.notificationTopRow}>
+                  <Text style={localStyles.notificationStatus}>
+                    {notification.statusLabel || notification.status}
+                  </Text>
+                  <Text style={localStyles.notificationTime}>
+                    {new Date(notification.timestamp).toLocaleString()}
+                  </Text>
+                </View>
+                <Text style={localStyles.notificationMessage}>{notification.message}</Text>
+                {notification.jobTitle ? (
+                  <Text style={localStyles.notificationMeta}>Job: {notification.jobTitle}</Text>
+                ) : null}
+                {notification.actorName ? (
+                  <Text style={localStyles.notificationMeta}>Labour: {notification.actorName}</Text>
+                ) : null}
+                {notification.actorMobile ? (
+                  <Text style={localStyles.notificationMeta}>Phone: {notification.actorMobile}</Text>
+                ) : null}
+                {notification.actorAddress ? (
+                  <Text style={localStyles.notificationMeta}>Address: {notification.actorAddress}</Text>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
 
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
@@ -496,7 +607,7 @@ export function CustomerDashboard({
                 <View style={localStyles.applicationMetaCard}>
                   <Text style={localStyles.applicationJobTitle}>{application.job.title}</Text>
                   <Text style={localStyles.applicationJobMeta}>
-                    {application.job.location} • {application.status}
+                    {application.job.location} - {application.statusLabel}
                   </Text>
                 </View>
                 <Pressable
@@ -668,7 +779,7 @@ export function CustomerDashboard({
                     Applied for: {selectedApplication?.job?.skill || 'General'}
                   </Text>
                   <Text style={localStyles.sheetMeta}>
-                    Status: {selectedApplication?.status || 'pending'}
+                    Status: {selectedApplication?.statusLabel || 'Pending'}
                   </Text>
                 </View>
               </View>
@@ -848,6 +959,40 @@ const localStyles = {
     fontSize: 11,
     fontWeight: '700',
     marginTop: 6,
+  },
+  notificationCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#e2eee8',
+    gap: 6,
+  },
+  notificationTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  notificationStatus: {
+    color: '#0c5a49',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  notificationTime: {
+    color: '#6b7c74',
+    fontSize: 11,
+  },
+  notificationMessage: {
+    color: '#17332e',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  notificationMeta: {
+    color: '#4f6760',
+    fontSize: 11,
+    lineHeight: 16,
   },
   sheetOverlay: {
     flex: 1,

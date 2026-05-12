@@ -615,6 +615,9 @@ export function LabourDashboard({
                       color="#0c5a49"
                     />
                   </View>
+                  <Text style={styles.detailCardHint}>
+                    {notification.statusLabel || notification.status}
+                  </Text>
                   <Text style={styles.notificationTime}>
                     {new Date(notification.timestamp).toLocaleTimeString()}
                   </Text>

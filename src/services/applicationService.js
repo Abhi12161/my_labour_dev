@@ -36,13 +36,19 @@ function getCustomerFromApplication(item) {
   return item?.customerId || item?.customer || item?.customerData || {};
 }
 
+function normalizeStatus(value, fallback = 'pending') {
+  return String(value || fallback).trim().toLowerCase();
+}
+
 export function normalizeApplication(item, index = 0) {
   const job = getJobFromApplication(item);
   const labour = getLabourFromApplication(item);
+  const status = normalizeStatus(item?.status);
 
   return {
     id: String(item?._id || item?.id || item?.applicationId || `application-${index}`),
-    status: item?.status || 'pending',
+    status,
+    statusLabel: item?.status || 'Pending',
     appliedAt: item?.createdAt || item?.appliedAt || item?.timestamp || new Date().toISOString(),
     customerId: item?.customerId || job?.customerId || '',
     job: {
@@ -64,17 +70,47 @@ export function normalizeApplication(item, index = 0) {
   };
 }
 
-export function normalizeNotification(item, index = 0) {
+function getNotificationEntries(item, role) {
+  const roleKey = role === 'customer' ? 'customerNotifications' : 'labourNotifications';
+  const singleMessageKey = role === 'customer' ? 'customerNotification' : 'labourNotification';
+  const notifications = Array.isArray(item?.[roleKey]) ? item[roleKey] : [];
+
+  if (notifications.length) {
+    return notifications;
+  }
+
+  if (item?.[singleMessageKey]) {
+    return [
+      {
+        type: item?.status || 'notification',
+        message: item[singleMessageKey],
+        createdAt: item?.updatedAt || item?.createdAt || item?.timestamp,
+      },
+    ];
+  }
+
+  return [];
+}
+
+function normalizeNotificationEntry(item, entry, index = 0, role = 'labour') {
   const job = getJobFromApplication(item);
   const labour = getLabourFromApplication(item);
   const customer = getCustomerFromApplication(item);
-  const actor = Object.keys(customer || {}).length ? customer : labour;
+  const actor = role === 'customer' ? labour : customer;
+  const type = entry?.type || item?.status || 'notification';
+  const status = normalizeStatus(type);
 
   return {
-    id: String(item?._id || item?.id || `notification-${index}`),
-    type: item?.type || item?.status || 'notification',
-    status: item?.status || 'pending',
-    timestamp: item?.createdAt || item?.updatedAt || item?.timestamp || new Date().toISOString(),
+    id: String(entry?._id || `${item?._id || item?.id || 'notification'}-${index}`),
+    type,
+    status,
+    statusLabel: type,
+    timestamp:
+      entry?.createdAt ||
+      item?.updatedAt ||
+      item?.createdAt ||
+      item?.timestamp ||
+      new Date().toISOString(),
     jobTitle: job?.title || item?.jobTitle || 'your job',
     jobLocation: job?.location || job?.city || item?.location || 'Not provided',
     actorName: actor?.name || item?.name || item?.labourName || item?.customerName || 'Unknown',
@@ -93,10 +129,22 @@ export function normalizeNotification(item, index = 0) {
       item?.customerAddress ||
       'Not provided',
     message:
+      entry?.message ||
       item?.message ||
-      item?.title ||
       `Job update for ${job?.title || item?.jobTitle || 'your job'}`,
   };
+}
+
+export function normalizeNotification(item, index = 0, role = 'labour') {
+  const notifications = getNotificationEntries(item, role);
+
+  if (!notifications.length) {
+    return [normalizeNotificationEntry(item, item, index, role)];
+  }
+
+  return notifications.map((entry, entryIndex) =>
+    normalizeNotificationEntry(item, entry, index + entryIndex, role)
+  );
 }
 
 export async function applyToJob(jobId, token) {
@@ -118,7 +166,20 @@ export async function fetchLabourNotifications(token) {
     token,
   });
 
-  return toArray(response).map(normalizeNotification);
+  return toArray(response)
+    .flatMap((item, index) => normalizeNotification(item, index, 'labour'))
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+}
+
+export async function fetchCustomerNotifications(token) {
+  const response = await apiRequest('/job-applications/notifications', {
+    method: 'GET',
+    token,
+  });
+
+  return toArray(response)
+    .flatMap((item, index) => normalizeNotification(item, index, 'customer'))
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 }
 
 export async function fetchCustomerApplications(token) {
