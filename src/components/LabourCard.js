@@ -1,6 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 export function LabourCard({
   copy,
@@ -10,20 +16,21 @@ export function LabourCard({
   disabled = false,
 }) {
   const scale = useRef(new Animated.Value(1)).current;
-const onPressIn = () => {
-  Animated.spring(scale, {
-    toValue: 0.92, // 👈 zyada shrink
-    useNativeDriver: true,
-    speed: 30,
-  }).start();
-};
 
-const onPressOut = () => {
-  Animated.spring(scale, {
-    toValue: 1,
-    useNativeDriver: true,
-  }).start();
-};
+  const onPressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.92,
+      useNativeDriver: true,
+      speed: 30,
+    }).start();
+  };
+
+  const onPressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
 
   return (
     <LinearGradient
@@ -32,39 +39,61 @@ const onPressOut = () => {
     >
       <View style={styles.card}>
 
-        {/* TOP */}
+        {/* TOP ROW — avatar + info column */}
         <View style={styles.topRow}>
-          
-          <View style={styles.left}>
-            <View style={styles.avatarWrapper}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{labour.photoLabel}</Text>
-              </View>
 
-              {/* ONLINE DOT */}
-              <View style={styles.onlineDot} />
-            </View>
-
-            <View>
-              <Text style={styles.name}>{labour.name}</Text>
-              <Text style={styles.skill}>{labour.primarySkill}</Text>
-              <Text style={styles.rating}>
-                ⭐ {labour.rating} ({labour.reviews})
+          {/* AVATAR */}
+          <View style={styles.avatarWrapper}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {labour.photoLabel}
               </Text>
             </View>
+            <View style={styles.onlineDot} />
           </View>
 
-          {/* RIGHT */}
-          <View style={styles.right}>
-            <Text style={styles.distance}>📍 {labour.distance}</Text>
-            <Text style={styles.available}>{labour.availability}</Text>
+          {/* INFO COLUMN */}
+          <View style={styles.infoColumn}>
+
+            {/* 1. NAME */}
+            <Text style={styles.name} numberOfLines={1}>
+              {labour.name}
+            </Text>
+
+            {/* 2. LOCATION */}
+            <View style={styles.locationRow}>
+              <Text style={styles.locationPin}>📍</Text>
+              <Text style={styles.locationText}>
+                {labour.location}
+              </Text>
+            </View>
+
+            {/* 3. PRIMARY SKILL */}
+            <Text style={styles.primarySkill}>
+              {labour.primarySkill}
+            </Text>
+
+            {/* 4. RATING */}
+            <Text style={styles.rating}>
+              ⭐ {labour.rating} ({labour.reviews} reviews)
+            </Text>
+
+            {/* 5. AVAILABLE + DISTANCE */}
+            <View style={styles.metaRow}>
+              <Text style={styles.available}>
+                ● {labour.availability}
+              </Text>
+              <Text style={styles.metaDot}>·</Text>
+              <Text style={styles.distance}>
+                🧭 {labour.distance}
+              </Text>
+            </View>
+
           </View>
+
         </View>
 
-        {/* LOCATION */}
-        <Text style={styles.location}>{labour.location}</Text>
-
-        {/* SKILLS */}
+        {/* SKILLS CHIPS */}
         <View style={styles.skills}>
           {labour.skills.slice(0, 3).map((s) => (
             <View key={s} style={styles.chip}>
@@ -73,7 +102,7 @@ const onPressOut = () => {
           ))}
         </View>
 
-        {/* BUTTON WITH ANIMATION */}
+        {/* BUTTON */}
         <Animated.View style={{ transform: [{ scale }] }}>
           <Pressable
             onPressIn={onPressIn}
@@ -82,12 +111,21 @@ const onPressOut = () => {
             disabled={disabled || !onActionPress}
           >
             <LinearGradient
-              colors={disabled ? ['#8ba69d', '#7b8f88'] : ['#1f7a63', '#2ecc71']}
+              colors={
+                disabled
+                  ? ['#8ba69d', '#7b8f88']
+                  : ['#1f7a63', '#2ecc71']
+              }
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={[styles.button, disabled && styles.buttonDisabled]}
+              style={[
+                styles.button,
+                disabled && styles.buttonDisabled,
+              ]}
             >
-              <Text style={styles.buttonText}>{actionLabel || copy.hireNow}</Text>
+              <Text style={styles.buttonText}>
+                {actionLabel || copy?.hireNow || 'Hire Now'}
+              </Text>
             </LinearGradient>
           </Pressable>
         </Animated.View>
@@ -98,10 +136,10 @@ const onPressOut = () => {
 }
 
 const styles = StyleSheet.create({
-outer: {
-  borderRadius: 18,
-  padding: 2.5, // 👈 IMPORTANT (increase this)
-},
+  outer: {
+    borderRadius: 18,
+    padding: 2.5,
+  },
 
   card: {
     backgroundColor: '#fff',
@@ -112,18 +150,13 @@ outer: {
 
   topRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  left: {
-    flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: 10,
-    alignItems: 'center',
   },
 
   avatarWrapper: {
     position: 'relative',
+    flexShrink: 0,
   },
 
   avatar: {
@@ -138,6 +171,7 @@ outer: {
   avatarText: {
     color: '#fff',
     fontWeight: '800',
+    fontSize: 16,
   },
 
   onlineDot: {
@@ -152,13 +186,35 @@ outer: {
     borderColor: '#fff',
   },
 
+  infoColumn: {
+    flex: 1,
+    gap: 3,
+    minWidth: 0,
+  },
+
   name: {
     fontSize: 15,
     fontWeight: '800',
     color: '#111',
   },
 
-  skill: {
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+
+  locationPin: {
+    fontSize: 11,
+  },
+
+  locationText: {
+    fontSize: 12,
+    color: '#555',
+    fontWeight: '500',
+  },
+
+  primarySkill: {
     fontSize: 12,
     color: '#1f7a63',
     fontWeight: '600',
@@ -169,14 +225,11 @@ outer: {
     color: '#666',
   },
 
-  right: {
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-
-  distance: {
-    fontSize: 11,
-    color: '#444',
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 1,
   },
 
   available: {
@@ -185,9 +238,15 @@ outer: {
     fontWeight: '700',
   },
 
-  location: {
-    fontSize: 12,
-    color: '#666',
+  metaDot: {
+    fontSize: 11,
+    color: '#bbb',
+  },
+
+  distance: {
+    fontSize: 11,
+    color: '#555',
+    fontWeight: '500',
   },
 
   skills: {
@@ -210,23 +269,22 @@ outer: {
   },
 
   button: {
-  marginTop: 6,
-  borderRadius: 12,
-  paddingVertical: 12,
-  alignItems: 'center',
-
-  shadowColor: '#1f7a63',
-  shadowOpacity: 0.4,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 4 },
-  elevation: 6,
-},
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    shadowColor: '#1f7a63',
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
 
   buttonText: {
     color: '#fff',
     fontWeight: '700',
     fontSize: 13,
   },
+
   buttonDisabled: {
     opacity: 0.85,
   },
