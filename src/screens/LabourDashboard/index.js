@@ -196,7 +196,7 @@ export function LabourDashboard({ language, onLogout, postedJobs, session }) {
     };
 
     loadJobs();
-    const intervalId = setInterval(loadJobs, 8000);
+    const intervalId = setInterval(loadJobs, 80000);
     return () => { isMounted = false; clearInterval(intervalId); };
   }, [postedJobs, session?.token]);
 
@@ -262,7 +262,7 @@ export function LabourDashboard({ language, onLogout, postedJobs, session }) {
     };
 
     loadNotifications();
-    const intervalId = setInterval(loadNotifications, 8000);
+    const intervalId = setInterval(loadNotifications, 800000);
     return () => { isMounted = false; clearInterval(intervalId); };
   }, [session?.role, session?.token]);
 

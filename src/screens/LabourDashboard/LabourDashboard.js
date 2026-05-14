@@ -212,7 +212,7 @@ export function LabourDashboard({
     };
 
     loadJobs();
-    const intervalId = setInterval(loadJobs, 8000);
+    const intervalId = setInterval(loadJobs, 80000);
 
     return () => {
       isMounted = false;
@@ -283,7 +283,7 @@ export function LabourDashboard({
     };
 
     loadNotifications();
-    const intervalId = setInterval(loadNotifications, 8000);
+    const intervalId = setInterval(loadNotifications, 800000);
 
     return () => {
       isMounted = false;

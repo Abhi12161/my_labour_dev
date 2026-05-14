@@ -310,7 +310,7 @@ export function CustomerDashboard({
     };
 
     loadNotifications();
-    const intervalId = setInterval(loadNotifications, 8000);
+    const intervalId = setInterval(loadNotifications, 800000);
 
     return () => {
       isMounted = false;
@@ -318,53 +318,65 @@ export function CustomerDashboard({
     };
   }, [session?.role, session?.token]);
 
-  useEffect(() => {
-    let isMounted = true;
+ useEffect(() => {
+  let isMounted = true;
 
-    const loadAvailableRequests = async () => {
-      const shouldUseApiRequests =
-        Boolean(session?.token) &&
-        session.token !== 'demo-session' &&
-        session?.role === 'customer';
+  const shouldUse =
+    Boolean(session?.token) &&
+    session.token !== 'demo-session' &&
+    session?.role === 'customer';
 
-      if (!shouldUseApiRequests) {
-        setAvailableRequests([]);
+  if (!shouldUse) {
+    setAvailableRequests([]);
+    setAvailableRequestsLoading(false);
+    setAvailableRequestsError('');
+    return;
+  }
+
+  const loadAvailableRequests = async () => {
+    setAvailableRequestsLoading(true);
+    setAvailableRequestsError('');
+
+    try {
+      const city = customerProfile?.city?.trim();
+
+      const requests = city
+        ? await fetchNearbyLabourRequests(
+            session.token,
+            city
+          )
+        : await fetchAvailableLabourRequests(
+            session.token
+          );
+
+      if (isMounted) {
+        setAvailableRequests(requests);
+      }
+    } catch (err) {
+      if (isMounted) {
+        setAvailableRequestsError(
+          err.message ||
+            'Failed to load available labour.'
+        );
+      }
+    } finally {
+      if (isMounted) {
         setAvailableRequestsLoading(false);
-        setAvailableRequestsError('');
-        return;
       }
+    }
+  };
 
-      setAvailableRequestsLoading(true);
-      setAvailableRequestsError('');
+  // ✅ only once
+  loadAvailableRequests();
 
-      try {
-        const city = customerProfile?.city?.trim();
-        const requests = city
-          ? await fetchNearbyLabourRequests(session.token, city)
-          : await fetchAvailableLabourRequests(session.token);
-
-        if (isMounted) {
-          setAvailableRequests(requests);
-        }
-      } catch (loadError) {
-        if (isMounted) {
-          setAvailableRequestsError(loadError.message || 'Failed to load available labour.');
-        }
-      } finally {
-        if (isMounted) {
-          setAvailableRequestsLoading(false);
-        }
-      }
-    };
-
-    loadAvailableRequests();
-    const intervalId = setInterval(loadAvailableRequests, 8000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(intervalId);
-    };
-  }, [customerProfile?.city, session?.role, session?.token]);
+  return () => {
+    isMounted = false;
+  };
+}, [
+  customerProfile?.city,
+  session?.role,
+  session?.token,
+]);
 
   const filteredLabours = useMemo(() => {
     return filterJobs(availableRequests.map(mapDirectRequestToLabourCard), {

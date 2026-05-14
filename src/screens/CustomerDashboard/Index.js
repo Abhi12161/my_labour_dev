@@ -35,22 +35,21 @@ import { mergeUniqueNotifications } from '../../utils/notificationUtils';
 import { styles } from './styles';
 
 // ─── Section components ────────────────────────────────────────────────────────
-import { HeroSection } from './sections/HeroSection';
 import {
-  ProfileSection,
-  buildInitialEditedProfile,
-  buildSavePayload,
-} from './sections/ProfileSection';
-import { StatsSection } from './sections/StatsSection';
+  ApplicationsSection,
+  dedupeApplicationsByMobile,
+} from './sections/ApplicationsSection';
+import { HeroSection } from './sections/HeroSection';
 import {
   LabourSection,
   mapDirectRequestToLabourCard,
 } from './sections/LabourSection';
 import { NotificationsSection } from './sections/NotificationsSection';
 import {
-  ApplicationsSection,
-  dedupeApplicationsByMobile,
-} from './sections/ApplicationsSection';
+  ProfileSection,
+  buildSavePayload
+} from './sections/ProfileSection';
+import { StatsSection } from './sections/StatsSection';
 
 // ─── Shared location helpers ──────────────────────────────────────────────────
 
@@ -268,46 +267,70 @@ export function CustomerDashboard({
     };
 
     loadNotifications();
-    const intervalId = setInterval(loadNotifications, 8000);
+    const intervalId = setInterval(loadNotifications, 800000);
     return () => { isMounted = false; clearInterval(intervalId); };
   }, [session?.role, session?.token]);
 
   // Fetch available labour requests (polling)
-  useEffect(() => {
-    let isMounted = true;
-    const shouldUse =
-      Boolean(session?.token) &&
-      session.token !== 'demo-session' &&
-      session?.role === 'customer';
+useEffect(() => {
+  let isMounted = true;
 
-    if (!shouldUse) {
-      setAvailableRequests([]);
-      setAvailableRequestsLoading(false);
-      setAvailableRequestsError('');
-      return;
-    }
+  const shouldUse =
+    Boolean(session?.token) &&
+    session.token !== 'demo-session' &&
+    session?.role === 'customer';
 
-    const loadAvailableRequests = async () => {
-      setAvailableRequestsLoading(true);
-      setAvailableRequestsError('');
-      try {
-        const city = customerProfile?.city?.trim();
-        const requests = city
-          ? await fetchNearbyLabourRequests(session.token, city)
-          : await fetchAvailableLabourRequests(session.token);
-        if (isMounted) setAvailableRequests(requests);
-      } catch (err) {
-        if (isMounted)
-          setAvailableRequestsError(err.message || 'Failed to load available labour.');
-      } finally {
-        if (isMounted) setAvailableRequestsLoading(false);
+  if (!shouldUse) {
+    setAvailableRequests([]);
+    setAvailableRequestsLoading(false);
+    setAvailableRequestsError('');
+    return;
+  }
+
+  const loadAvailableRequests = async () => {
+    setAvailableRequestsLoading(true);
+    setAvailableRequestsError('');
+
+    try {
+      const city = customerProfile?.city?.trim();
+
+      const requests = city
+        ? await fetchNearbyLabourRequests(
+            session.token,
+            city
+          )
+        : await fetchAvailableLabourRequests(
+            session.token
+          );
+
+      if (isMounted) {
+        setAvailableRequests(requests);
       }
-    };
+    } catch (err) {
+      if (isMounted) {
+        setAvailableRequestsError(
+          err.message ||
+            'Failed to load available labour.'
+        );
+      }
+    } finally {
+      if (isMounted) {
+        setAvailableRequestsLoading(false);
+      }
+    }
+  };
 
-    loadAvailableRequests();
-    const intervalId = setInterval(loadAvailableRequests, 8000);
-    return () => { isMounted = false; clearInterval(intervalId); };
-  }, [customerProfile?.city, session?.role, session?.token]);
+  // ✅ only once
+  loadAvailableRequests();
+
+  return () => {
+    isMounted = false;
+  };
+}, [
+  customerProfile?.city,
+  session?.role,
+  session?.token,
+]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Derived data
