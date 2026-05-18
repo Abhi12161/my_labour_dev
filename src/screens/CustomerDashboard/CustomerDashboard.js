@@ -18,9 +18,9 @@ import {
   popularSkills,
 } from '../../data/dashboardData';
 import {
+  cancelCustomerApplication,
   fetchCustomerApplications,
   fetchCustomerNotifications,
-  hireApplication,
 } from '../../services/applicationService';
 import {
   directHireLabour,
@@ -90,7 +90,7 @@ const mapApplicationToLabourCard = (application) => ({
   reviews: 0,
   distance: application.job.location,
   location: application.labour.address,
-  availability: application.status === 'hired' ? 'Hired' : 'Applied',
+  availability: application.status === 'cancelled' ? 'Cancelled' : 'Assigned',
   photoLabel: (application.labour.name || 'L').charAt(0).toUpperCase(),
 });
 
@@ -127,6 +127,38 @@ const dedupeApplicationsByMobile = (applications) => {
   });
 
   return Array.from(seen.values());
+};
+
+const normalizeIdentity = (value) => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return normalized === 'not provided' ? '' : normalized;
+};
+
+const getHiredLabourKeys = (applications) => {
+  const hiredStatuses = new Set(['hired', 'assigned', 'accepted']);
+  const keys = new Set();
+
+  applications.forEach((application) => {
+    if (!hiredStatuses.has(normalizeIdentity(application.status))) return;
+
+    const labourId = normalizeIdentity(application.labour?.id);
+    const labourMobile = normalizeIdentity(application.labour?.mobile);
+
+    if (labourId) keys.add(`id:${labourId}`);
+    if (labourMobile) keys.add(`mobile:${labourMobile}`);
+  });
+
+  return keys;
+};
+
+const isAlreadyHiredLabour = (request, hiredLabourKeys) => {
+  const labourId = normalizeIdentity(request.labour?.id);
+  const labourMobile = normalizeIdentity(request.labour?.mobile);
+
+  return (
+    (labourId && hiredLabourKeys.has(`id:${labourId}`)) ||
+    (labourMobile && hiredLabourKeys.has(`mobile:${labourMobile}`))
+  );
 };
 
 export function CustomerDashboard({
@@ -378,12 +410,25 @@ export function CustomerDashboard({
   session?.token,
 ]);
 
+  const hiredLabourKeys = useMemo(
+    () => getHiredLabourKeys(applications),
+    [applications]
+  );
+
+  const visibleAvailableRequests = useMemo(
+    () =>
+      availableRequests.filter(
+        (request) => !isAlreadyHiredLabour(request, hiredLabourKeys)
+      ),
+    [availableRequests, hiredLabourKeys]
+  );
+
   const filteredLabours = useMemo(() => {
-    return filterJobs(availableRequests.map(mapDirectRequestToLabourCard), {
+    return filterJobs(visibleAvailableRequests.map(mapDirectRequestToLabourCard), {
       ...filters,
       search: deferredSearch,
     });
-  }, [availableRequests, deferredSearch, filters]);
+  }, [visibleAvailableRequests, deferredSearch, filters]);
 
   const customerLocation =
     customerProfile?.address ||
@@ -429,6 +474,7 @@ export function CustomerDashboard({
       location: form.city,
       timing: form.timing,
       level: form.level,
+      requiredLabours: Math.max(Number(form.requiredLabours) || 1, 1),
     };
 
     try {
@@ -480,7 +526,11 @@ export function CustomerDashboard({
   const handleHireLabour = async (application) => {
     try {
       setHiringApplicationId(application.id);
-      const updatedApplication = await hireApplication(application.id, session.token);
+      const updatedApplication = await cancelCustomerApplication(
+        application.id,
+        'Cancelled by customer',
+        session.token
+      );
       const refreshedNotifications = await fetchCustomerNotifications(session.token);
 
       setApplications((current) =>
@@ -488,10 +538,19 @@ export function CustomerDashboard({
           current.map((item) => (item.id === updatedApplication.id ? updatedApplication : item))
         )
       );
+      if (['hired', 'assigned', 'accepted'].includes(normalizeIdentity(updatedApplication.status))) {
+        setAvailableRequests((current) =>
+          current.filter(
+            (request) =>
+              normalizeIdentity(request.labour?.id) !== normalizeIdentity(updatedApplication.labour?.id) &&
+              normalizeIdentity(request.labour?.mobile) !== normalizeIdentity(updatedApplication.labour?.mobile)
+          )
+        );
+      }
       setNotifications(refreshedNotifications);
-      Alert.alert('Success', `${updatedApplication.labour.name} has been hired successfully.`);
+      Alert.alert('Success', `${updatedApplication.labour.name} assignment has been cancelled.`);
     } catch (hireError) {
-      Alert.alert('Error', hireError.message || 'Failed to hire labour.');
+      Alert.alert('Error', hireError.message || 'Failed to cancel assignment.');
     } finally {
       setHiringApplicationId('');
     }
@@ -855,18 +914,18 @@ export function CustomerDashboard({
                   copy={text}
                   labour={mapApplicationToLabourCard(application)}
                   actionLabel={
-                    application.status === 'hired'
-                      ? 'Hired'
+                    application.status === 'cancelled'
+                      ? 'Cancelled'
                       : hiringApplicationId === application.id
-                        ? 'Hiring...'
-                        : text.hireNow
+                        ? 'Cancelling...'
+                        : 'Cancel Assignment'
                   }
                   onActionPress={
-                    application.status === 'hired'
+                    application.status === 'cancelled'
                       ? undefined
                       : () => handleHireLabour(application)
                   }
-                  disabled={application.status === 'hired' || hiringApplicationId === application.id}
+                  disabled={application.status === 'cancelled' || hiringApplicationId === application.id}
                 />
               </View>
             ))
@@ -1051,22 +1110,22 @@ export function CustomerDashboard({
               <Pressable
                 style={[
                   localStyles.sheetHireButton,
-                  (selectedApplication?.status === 'hired' ||
+                  (selectedApplication?.status === 'cancelled' ||
                     hiringApplicationId === selectedApplication?.id) &&
                   localStyles.sheetHireButtonDisabled,
                 ]}
                 disabled={
-                  selectedApplication?.status === 'hired' ||
+                  selectedApplication?.status === 'cancelled' ||
                   hiringApplicationId === selectedApplication?.id
                 }
                 onPress={() => handleHireLabour(selectedApplication)}
               >
                 <Text style={localStyles.sheetHireButtonText}>
-                  {selectedApplication?.status === 'hired'
-                    ? 'Already Hired'
+                  {selectedApplication?.status === 'cancelled'
+                    ? 'Cancelled'
                     : hiringApplicationId === selectedApplication?.id
-                      ? 'Hiring...'
-                      : text.hireNow}
+                      ? 'Cancelling...'
+                      : 'Cancel Assignment'}
                 </Text>
               </Pressable>
             </ScrollView>

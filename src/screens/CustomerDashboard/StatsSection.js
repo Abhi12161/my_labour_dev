@@ -7,7 +7,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatCard } from '../../components/StatCard';
 import { customerOverviewStats, popularSkills } from '../../data/dashboardData';
-import { styles } from '../styles';
+import { styles } from './styles';
 
 // ─── Section-specific static data ─────────────────────────────────────────────
 
@@ -82,3 +82,4 @@ export function StatsSection({ text, onOpenModal }) {
     </>
   );
 }
+

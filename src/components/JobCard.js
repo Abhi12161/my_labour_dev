@@ -2,39 +2,46 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export function JobCard({ job, actionLabel, onActionPress, disabled = false }) {
+  const status = job.status || (job.isCompleted ? 'Completed' : 'Open');
+  const hiredCount = job.hiredCount ?? job.applicants ?? 0;
+  const requiredLabours = job.requiredLabours ?? 1;
+  const filledText = `${hiredCount}/${requiredLabours}`;
+  const filledPercent = Math.min((hiredCount / Math.max(requiredLabours, 1)) * 100, 100);
+
   return (
     <View style={styles.wrapper}>
       <View style={styles.card}>
-
-        {/* HEADER */}
         <View style={styles.header}>
           <Text style={styles.title} numberOfLines={2}>
             {job.title}
           </Text>
 
-          <View style={styles.distancePill}>
-            <Text style={styles.distanceText}>{job.distance}</Text>
+          <View style={[styles.statusPill, job.isCompleted && styles.statusPillDone]}>
+            <Text style={[styles.statusText, job.isCompleted && styles.statusTextDone]}>
+              {status}
+            </Text>
           </View>
         </View>
 
-        {/* LOCATION */}
-        <Text style={styles.location}>📍 {job.location}</Text>
+        <Text style={styles.location}>Location: {job.location}</Text>
 
-        {/* META ROW */}
         <View style={styles.metaRow}>
-          <Text style={styles.meta}>🛠 {job.skill}</Text>
-          <Text style={styles.dot}>•</Text>
-          <Text style={styles.meta}>👥 {job.applicants}</Text>
-          <Text style={styles.dot}>•</Text>
-          <Text style={styles.meta}>⏱ {job.posted}</Text>
+          <Text style={styles.meta}>{job.skill}</Text>
+          <Text style={styles.dot}>-</Text>
+          <Text style={styles.meta}>Labours {filledText}</Text>
+          <Text style={styles.dot}>-</Text>
+          <Text style={styles.meta}>{job.posted}</Text>
         </View>
 
-        {/* DESCRIPTION */}
-        {job.description && (
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${filledPercent}%` }]} />
+        </View>
+
+        {job.description ? (
           <Text style={styles.desc} numberOfLines={2}>
             {job.description}
           </Text>
-        )}
+        ) : null}
 
         {actionLabel ? (
           <Pressable onPress={onActionPress} disabled={disabled}>
@@ -48,7 +55,6 @@ export function JobCard({ job, actionLabel, onActionPress, disabled = false }) {
             </LinearGradient>
           </Pressable>
         ) : null}
-
       </View>
     </View>
   );
@@ -59,89 +65,91 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 14,
   },
-
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 18,
     padding: 14,
     gap: 10,
-
     borderWidth: 1,
     borderColor: '#eef2f1',
-
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
-
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 10,
   },
-
   title: {
     flex: 1,
     fontSize: 15,
     fontWeight: '700',
     color: '#111827',
   },
-
-  distancePill: {
+  statusPill: {
     backgroundColor: '#ecfdf5',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
   },
-
-  distanceText: {
+  statusPillDone: {
+    backgroundColor: '#eef2f7',
+  },
+  statusText: {
     fontSize: 11,
     fontWeight: '700',
     color: '#065f46',
   },
-
+  statusTextDone: {
+    color: '#475569',
+  },
   location: {
     fontSize: 12,
     color: '#6b7280',
   },
-
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: 4,
   },
-
   meta: {
     fontSize: 12,
     color: '#4b5563',
   },
-
   dot: {
     fontSize: 12,
     color: '#9ca3af',
   },
-
+  progressTrack: {
+    height: 7,
+    borderRadius: 999,
+    overflow: 'hidden',
+    backgroundColor: '#e5e7eb',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 999,
+    backgroundColor: '#1f7a63',
+  },
   desc: {
     fontSize: 12,
     color: '#374151',
   },
-
   button: {
     marginTop: 6,
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
-
     shadowColor: '#1f7a63',
     shadowOpacity: 0.25,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
     elevation: 3,
   },
-
   buttonText: {
     color: '#fff',
     fontSize: 13,

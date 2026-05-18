@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -26,6 +26,7 @@ import {
 } from '../../data/dashboardData';
 import {
   applyToJob,
+  fetchLabourApplications,
   fetchLabourNotifications,
 } from '../../services/applicationService';
 import {
@@ -43,6 +44,66 @@ import {
 } from '../../store/profileSlice';
 import { mergeUniqueNotifications } from '../../utils/notificationUtils';
 import { styles } from './styles';
+
+const AVAILABILITY_COOLDOWN_MS = 60 * 60 * 1000;
+
+const getRequestTime = (request) => {
+  const value = request?.updatedAt || request?.createdAt;
+  const time = value ? new Date(value).getTime() : 0;
+  return Number.isNaN(time) ? 0 : time;
+};
+
+const isSameLocalDay = (firstTime, secondTime) => {
+  if (!firstTime || !secondTime) return false;
+
+  const first = new Date(firstTime);
+  const second = new Date(secondTime);
+
+  return (
+    first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth() &&
+    first.getDate() === second.getDate()
+  );
+};
+
+const getAvailabilityState = (request, now) => {
+  const status = request?.status;
+  const requestTime = getRequestTime(request);
+
+  if (status === 'hired' && isSameLocalDay(requestTime, now)) {
+    return {
+      canPress: false,
+      hideButton: true,
+      label: 'Hired for Work',
+      subtitle: `Direct hire confirmed for ${request.workDetails?.location || 'your work site'}.`,
+      blockedMessage: 'Aap aaj ke liye hire ho chuke hain. Kal phir available mark kar sakte hain.',
+    };
+  }
+
+  if (status === 'available') {
+    const remainingMs = Math.max(AVAILABILITY_COOLDOWN_MS - (now - requestTime), 0);
+
+    if (remainingMs > 0) {
+      const remainingMinutes = Math.max(Math.ceil(remainingMs / 60000), 1);
+
+      return {
+        canPress: false,
+        hideButton: false,
+        label: 'Available Now',
+        subtitle: `You are visible for direct hire. Try again after ${remainingMinutes} min if not hired.`,
+        blockedMessage: `Aap already available hain. ${remainingMinutes} minute baad dobara try kar sakte hain.`,
+      };
+    }
+  }
+
+  return {
+    canPress: true,
+    hideButton: false,
+    label: 'Mark Available',
+    subtitle: 'Mark yourself available for direct hire without waiting for a posted job.',
+    blockedMessage: '',
+  };
+};
 
 const skillEditorCopy = {
   en: {
@@ -115,17 +176,6 @@ const getLabourProfile = (profile, sessionUser, sessionToken) => {
   return sessionToken === 'demo-session' ? labourProfile : {};
 };
 
-const isSameDate = (left, right) => {
-  const leftDate = new Date(left);
-  const rightDate = new Date(right);
-
-  return (
-    leftDate.getFullYear() === rightDate.getFullYear() &&
-    leftDate.getMonth() === rightDate.getMonth() &&
-    leftDate.getDate() === rightDate.getDate()
-  );
-};
-
 export function LabourDashboard({
   language,
   onLogout,
@@ -151,6 +201,7 @@ export function LabourDashboard({
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availabilityRequest, setAvailabilityRequest] = useState(null);
+  const [availabilityNow, setAvailabilityNow] = useState(Date.now());
   const [skillForm, setSkillForm] = useState({
     skillId: null,
     name: '',
@@ -158,6 +209,19 @@ export function LabourDashboard({
     level: '',
     notes: '',
   });
+
+  const availabilityState = useMemo(
+    () => getAvailabilityState(availabilityRequest, availabilityNow),
+    [availabilityRequest, availabilityNow]
+  );
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setAvailabilityNow(Date.now());
+    }, 60000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     if (
@@ -237,9 +301,10 @@ export function LabourDashboard({
       setNotificationsLoading(true);
 
       try {
-        const [fetchedNotifications, myAvailability] = await Promise.all([
+        const [fetchedNotifications, myAvailability, assignedApplications] = await Promise.all([
           fetchLabourNotifications(session.token),
           fetchMyAvailability(session.token).catch(() => null),
+          fetchLabourApplications(session.token).catch(() => []),
         ]);
 
         const directNotifications = myAvailability
@@ -250,14 +315,9 @@ export function LabourDashboard({
           setAvailabilityRequest(myAvailability);
           setNotifications(mergeUniqueNotifications(fetchedNotifications, directNotifications));
           setAppliedJobs(
-            fetchedNotifications
-              .filter(
-                (notification) =>
-                  notification.jobId &&
-                  ['applied', 'hired', 'accepted'].includes(notification.status) &&
-                  isSameDate(notification.timestamp, new Date())
-              )
-              .map((notification) => notification.jobId)
+            assignedApplications
+              .filter((application) => ['assigned', 'applied', 'hired', 'accepted'].includes(application.status))
+              .map((application) => application.job.id)
           );
         }
       } catch (notificationError) {
@@ -452,6 +512,11 @@ export function LabourDashboard({
     return;
   }
 
+  if (job.isCompleted || job.availableSlots <= 0) {
+    Alert.alert('Job full', 'Is job ke required labours complete ho chuke hain.');
+    return;
+  }
+
   // Function to handle the actual API call
   const confirmApply = async () => {
     try {
@@ -462,17 +527,19 @@ export function LabourDashboard({
       await applyToJob(job.id, session.token);
 
       // Refresh notifications after applying
-      const [fetchedNotifications, myAvailability] = await Promise.all([
+      const [fetchedNotifications, myAvailability, refreshedJobs] = await Promise.all([
         fetchLabourNotifications(session.token),
         fetchMyAvailability(session.token).catch(() => null),
+        fetchJobs(session.token).catch(() => jobs),
       ]);
       const directNotifications = myAvailability
         ? normalizeDirectHireNotifications(myAvailability, 'labour')
         : [];
       setAvailabilityRequest(myAvailability);
+      setJobs(refreshedJobs);
       setNotifications(mergeUniqueNotifications(fetchedNotifications, directNotifications));
 
-      Alert.alert(text.applicationSuccessTitle, text.applicationSuccessMessage);
+      Alert.alert('Assigned', 'Aap is job par auto assigned ho gaye hain.');
     } catch (err) {
       console.error('Apply job error:', err);
 
@@ -503,6 +570,11 @@ export function LabourDashboard({
       return;
     }
 
+    if (!availabilityState.canPress) {
+      Alert.alert('Please wait', availabilityState.blockedMessage);
+      return;
+    }
+
     const markAvailable = async () => {
       try {
         setAvailabilityLoading(true);
@@ -510,6 +582,7 @@ export function LabourDashboard({
         const directNotifications = normalizeDirectHireNotifications(request, 'labour');
 
         setAvailabilityRequest(request);
+        setAvailabilityNow(Date.now());
         setNotifications((prev) => mergeUniqueNotifications(directNotifications, prev));
         Alert.alert('Available', request.notification || 'You are now available for direct hire.');
       } catch (loadError) {
@@ -644,26 +717,19 @@ export function LabourDashboard({
           <View style={styles.textWrap}>
             <Text style={styles.todayTitle}>{text.todayWorkButton}</Text>
             <Text style={styles.todaySubtitle}>
-              {availabilityRequest?.status === 'hired'
-                ? `Direct hire confirmed for ${availabilityRequest.workDetails.location || 'your work site'}.`
-                : availabilityRequest?.status === 'available'
-                  ? 'You are visible for direct hire. Customers can contact and hire you.'
-                  : 'Mark yourself available for direct hire without waiting for a posted job.'}
+              {availabilityState.subtitle}
             </Text>
           </View>
         </View>
 
-        <PrimaryButton
-          loading={availabilityLoading}
-          label={
-            availabilityRequest?.status === 'hired'
-                ? 'Hired for Work'
-                : availabilityRequest?.status === 'available'
-                  ? 'Available Now'
-                  : 'Mark Available'
-          }
-          onPress={handleTodayWork}
-        />
+        {!availabilityState.hideButton ? (
+          <PrimaryButton
+            loading={availabilityLoading}
+            disabled={!availabilityState.canPress}
+            label={availabilityState.label}
+            onPress={handleTodayWork}
+          />
+        ) : null}
       </View>
 
       {(notificationsLoading || notifications.length > 0) && (
@@ -981,9 +1047,15 @@ export function LabourDashboard({
               key={job.id}
               copy={text}
               job={job}
-              actionLabel={appliedJobs.includes(job.id) ? text.applied : text.applyNow}
+              actionLabel={
+                job.isCompleted || job.availableSlots <= 0
+                  ? 'Job Completed'
+                  : appliedJobs.includes(job.id)
+                    ? 'Assigned'
+                    : text.applyNow
+              }
               onActionPress={() => handleApplyForJob(job)}
-              disabled={appliedJobs.includes(job.id)}
+              disabled={job.isCompleted || job.availableSlots <= 0 || appliedJobs.includes(job.id)}
             />
           ))}
           {!jobsLoading && !matchedJobs.length ? (

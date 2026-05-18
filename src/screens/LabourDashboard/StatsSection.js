@@ -4,11 +4,10 @@
 // Actions: onTodayWork
 
 import { Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { StatCard } from '../../components/StatCard';
 import { labourOverviewStats } from '../../data/dashboardData';
-import { styles } from '../styles';
+import { styles } from './styles';
 
 // ─── Section-specific static data ─────────────────────────────────────────────
 
@@ -115,3 +114,4 @@ export function StatsSection({
     </>
   );
 }
+

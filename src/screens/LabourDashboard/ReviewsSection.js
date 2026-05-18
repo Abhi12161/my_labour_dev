@@ -11,7 +11,7 @@ import {
   labourReviews,
   labourWorkHistory,
 } from '../../data/dashboardData';
-import { styles } from '../styles';
+import { styles } from './styles';
 
 // ─── Data helpers ─────────────────────────────────────────────────────────────
 
@@ -138,3 +138,4 @@ export function ReviewsSection({ text }) {
     </>
   );
 }
+

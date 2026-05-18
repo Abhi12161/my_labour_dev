@@ -1,109 +1,60 @@
 import { StyleSheet } from 'react-native';
 
-import { colors } from '../../theme/tokens';
-
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.page,
+    backgroundColor: '#ffffff',
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  header: {
     alignItems: 'center',
-    marginBottom: 20,
-    gap: 10,
+    backgroundColor: '#ffffff',
+    flexGrow: 1,
   },
-  logo: {
-    fontSize: 42,
+  artworkFrame: {
+    width: '100%',
+    maxWidth: 520,
+    backgroundColor: '#ffffff',
   },
-  appName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
+  artwork: {
+    width: '100%',
+    aspectRatio: 2 / 3,
   },
-  heroSection: {
-    marginBottom: 24,
+  artworkImage: {
+    width: '100%',
+    height: '100%',
   },
-  headline: {
-    fontSize: 24,
-    fontWeight: '800',
-    textAlign: 'center',
+  hitArea: {
+    position: 'absolute',
+    backgroundColor: 'transparent',
   },
-  subheadline: {
-    textAlign: 'center',
-    color: '#777',
+  hindiHitArea: {
+    left: '27%',
+    top: '22.1%',
+    width: '11%',
+    height: '3.8%',
   },
-  rolesGrid: {
-    gap: 16,
+  englishHitArea: {
+    left: '39.2%',
+    top: '22.1%',
+    width: '12.4%',
+    height: '3.8%',
   },
-  roleCard: {
-    borderRadius: 24,
-    padding: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+  bhojpuriHitArea: {
+    left: '53.4%',
+    top: '22.1%',
+    width: '12.6%',
+    height: '3.8%',
   },
-  iconContainer: {
-    width: 55,
-    height: 55,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
+  customerHitArea: {
+    left: '4.6%',
+    top: '51.1%',
+    width: '90.8%',
+    height: '18.9%',
   },
-  icon: {
-    fontSize: 24,
-  },
-  roleTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '800',
-    marginTop: 12,
-  },
-  roleDescription: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 13,
-    marginTop: 4,
-  },
-  ctaButton: {
-    padding: 12,
-    borderRadius: 12,
-    marginTop: 14,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 4,
-  },
-  ctaText: {
-    fontWeight: '800',
-    color: '#111',
-  },
-  footer: {
-    backgroundColor: colors.panelMuted,
-    padding: 16,
-    gap: 8,
-    marginTop: 16,
-  },
-  footerText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.text,
-    textAlign: 'center',
-  },
-  footerSubtext: {
-    fontSize: 12,
-    color: colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 18,
+  labourHitArea: {
+    left: '4.6%',
+    top: '71.3%',
+    width: '90.8%',
+    height: '19.4%',
   },
 });
